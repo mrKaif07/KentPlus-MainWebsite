@@ -6,12 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Droplets, Check, ArrowRight, ArrowLeft, MapPin, User,
   Calendar, CreditCard, ShieldCheck, CheckCircle2, Sparkles, Phone, Clock,
-  Building, Home, Shield, Waves, ChevronRight, AlertCircle
+  Building, Home, Shield, Waves, ChevronRight, AlertCircle, Truck
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
-import { AREAS as SERVICE_AREAS, AREA_TIMELINES, getDefaultDeliveryDateForArea } from '@/lib/constants';
+import { AREAS as SERVICE_AREAS, AREA_TIMELINES, getDefaultDeliveryDateForArea, BRAND } from '@/lib/constants';
 
 export default function BookWaterPage() {
   const { tr, isHi } = useLanguage();
@@ -31,6 +31,7 @@ export default function BookWaterPage() {
   const initialTimeline = AREA_TIMELINES['Bhagwanpur'];
   const [formData, setFormData] = useState({
     customerType: 'Home',
+    fulfillmentType: 'delivery' as 'delivery' | 'plant_pickup',
     fullName: '',
     phone: '',
     email: '',
@@ -267,17 +268,68 @@ export default function BookWaterPage() {
                 <span>{tr('Sector:', 'इलाका:')}</span>
                 <span className="text-[#00A99D] font-extrabold">{formData.area}</span>
                 {preselectedInfo.date && (
-                  <span className="bg-white px-2.5 py-0.5 rounded-full text-[11px] text-[#052E2B] border border-[#00A99D]/30 font-bold">
-                    📅 {tr('Date:', 'तारीख:')} {formData.startDate}
+                  <span className="bg-white px-2.5 py-0.5 rounded-full text-[11px] text-[#052E2B] border border-[#00A99D]/30 font-bold inline-flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-[#00A99D]" />
+                    <span>{tr('Date:', 'तारीख:')} {formData.startDate}</span>
                   </span>
                 )}
                 {preselectedInfo.slot && (
-                  <span className="bg-[#052E2B] text-[#36D399] px-2.5 py-0.5 rounded-full text-[11px] font-bold">
-                    ⏰ {formData.timeSlot}
+                  <span className="bg-[#052E2B] text-[#36D399] px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-[#36D399]" />
+                    <span>{formData.timeSlot}</span>
                   </span>
                 )}
               </motion.div>
             )}
+          </motion.div>
+
+          {/* Direct Plant Pickup Info Banner (05:00 AM to 9:00 PM) */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-8 rounded-3xl bg-gradient-to-r from-[#052E2B] via-[#0A4440] to-[#00695F] text-white p-5 sm:p-6 border-2 border-[#36D399]/40 shadow-2xl relative overflow-hidden"
+          >
+            <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#36D399]/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#36D399] text-[#052E2B] flex items-center justify-center shrink-0 shadow-lg shadow-[#36D399]/30 mt-0.5">
+                  <Clock className="w-6 h-6 stroke-[2.5]" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="bg-[#36D399] text-[#052E2B] text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider shadow-sm">
+                      {tr('Plant Open: 05:00 AM – 9:00 PM Daily', 'प्लांट का समय: सुबह 05:00 AM से रात 9:00 PM (रोज़ाना)')}
+                    </span>
+                    <span className="text-[#36D399] text-xs font-bold flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> {tr('Open For Everyone', 'सभी के लिए खुला')}
+                    </span>
+                  </div>
+                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+                    {tr('Anyone Can Get Water Directly From Our Plant (05:00 AM to 9:00 PM)', 'कोई भी व्यक्ति सीधे हमारे प्लांट से आकर पानी ले सकता है (सुबह 05:00 AM से रात 9:00 PM)')}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#E8FFFA]/85 mt-1 leading-relaxed max-w-2xl">
+                    {tr(
+                      'Need water right now or on non-route days? Anyone can visit our main plant (Near Pakri River, Muzaffarpur) between 05:00 AM and 9:00 PM every day to get fresh 95% pure 20L jars directly!',
+                      'क्या आपको तुरंत पानी चाहिए या बिना किसी डिलीवरी इंतज़ार के? कोई भी व्यक्ति रोज़ाना सुबह 05:00 AM से रात 9:00 PM के बीच सीधे हमारे मुख्य प्लांट (पकड़ी नदी के पास, मुजफ्फरपुर) आकर ताज़ा 20L जार ले सकता है!'
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 flex sm:flex-col items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
+                <a
+                  href={`tel:${BRAND.rawPhone || '9934005300'}`}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#052E2B] hover:bg-[#36D399] text-xs font-black transition-all shadow-md"
+                >
+                  <Phone className="w-3.5 h-3.5 text-[#00A99D]" />
+                  <span>{tr('Plant Helpline', 'प्लांट हेल्पलाइन')}</span>
+                </a>
+                <span className="text-[10px] text-[#36D399] font-bold text-center whitespace-nowrap inline-flex items-center justify-center gap-1">
+                  <MapPin className="w-3 h-3 text-[#36D399]" />
+                  <span>{tr('Near Pakri River', 'पकड़ी नदी के पास')}</span>
+                </span>
+              </div>
+            </div>
           </motion.div>
 
           {!submitted ? (
@@ -480,6 +532,76 @@ export default function BookWaterPage() {
                         </p>
                       </div>
 
+                      {/* Fulfillment Method Selector: Doorstep Delivery vs Direct Plant Pickup */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            fulfillmentType: 'delivery',
+                            address: prev.address.includes('Main Plant') ? '' : prev.address
+                          }))}
+                          className={`p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 ${
+                            formData.fulfillmentType === 'delivery'
+                              ? 'border-[#00A99D] bg-[#E8FFFA] text-[#052E2B] ring-2 ring-[#00A99D]/30 shadow-sm'
+                              : 'border-[#00A99D]/20 bg-white text-[#4B6E6A] hover:bg-[#F4FCFA]'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            formData.fulfillmentType === 'delivery' ? 'bg-[#00A99D] text-white' : 'bg-[#E8FFFA] text-[#00A99D]'
+                          }`}>
+                            <Truck className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold block text-[#052E2B]">{tr('Doorstep Delivery', 'घर पर डिलीवरी')}</span>
+                            <span className="text-[11px] text-[#4B6E6A] block">{tr('Vans deliver to your locality address', 'आपकी कॉलोनी / पते पर वैन से डिलीवरी')}</span>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            fulfillmentType: 'plant_pickup',
+                            address: 'Main Plant: Near Pakri River, Muzaffarpur (Direct Collection 05:00 AM - 9:00 PM)',
+                            timeSlot: 'Direct Plant Pickup (5:00 AM - 9:00 PM)'
+                          }))}
+                          className={`p-3.5 rounded-2xl border text-left transition-all flex items-center gap-3 ${
+                            formData.fulfillmentType === 'plant_pickup'
+                              ? 'border-[#00A99D] bg-[#E8FFFA] text-[#052E2B] ring-2 ring-[#00A99D]/30 shadow-sm'
+                              : 'border-[#00A99D]/20 bg-white text-[#4B6E6A] hover:bg-[#F4FCFA]'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            formData.fulfillmentType === 'plant_pickup' ? 'bg-[#36D399] text-[#052E2B]' : 'bg-[#E8FFFA] text-[#00A99D]'
+                          }`}>
+                            <Clock className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-[#052E2B]">{tr('Direct Plant Pickup', 'सीधे प्लांट से उठाव')}</span>
+                              <span className="text-[9px] font-black bg-[#36D399] text-[#052E2B] px-1.5 py-0.5 rounded-full uppercase">05 AM - 9 PM</span>
+                            </div>
+                            <span className="text-[11px] text-[#4B6E6A] block">{tr('Anyone can pick up water from plant', 'कोई भी प्लांट से आकर पानी ले सकता है')}</span>
+                          </div>
+                        </button>
+                      </div>
+
+                      {formData.fulfillmentType === 'plant_pickup' && (
+                        <div className="p-4 rounded-2xl bg-[#E8FFFA] border border-[#00A99D]/40 text-xs text-[#052E2B] space-y-1.5">
+                          <div className="flex items-center gap-2 font-bold text-[#00A99D]">
+                            <CheckCircle2 className="w-4 h-4 text-[#00A99D]" />
+                            <span>{tr('Direct Plant Pickup Active (Open 05:00 AM – 9:00 PM Daily)', 'सीधे प्लांट से उठाव सक्रिय (रोज़ाना सुबह 05:00 AM – रात 9:00 PM खुला)')}</span>
+                          </div>
+                          <p className="text-xs text-[#052E2B] leading-relaxed">
+                            {tr(
+                              'Plant Location: Near Pakri River, Muzaffarpur. Anyone can visit and get 95% pure 20L water cans anytime between 05:00 AM and 9:00 PM without waiting for route delivery.',
+                              'प्लांट का स्थान: पकड़ी नदी के पास, मुजफ्फरपुर। कोई भी व्यक्ति बिना किसी डिलीवरी इंतज़ार के सुबह 05:00 AM से रात 9:00 PM के बीच कभी भी आकर 20L जार ले सकता है।'
+                            )}
+                          </p>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Service Area / Locality *', 'सेवा क्षेत्र / मोहल्ला *')}</label>
@@ -668,10 +790,17 @@ export default function BookWaterPage() {
                             onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
+                            <option value="Direct Plant Pickup (5:00 AM - 9:00 PM)">
+                              {tr('Direct Plant Pickup (5:00 AM – 9:00 PM Daily)', 'सीधे प्लांट से उठाव (सुबह 5:00 AM – रात 9:00 PM रोज़ाना)')}
+                            </option>
                             <option value="Morning (6:00 AM - 12:00 PM)">{tr('Morning Shift (6:00 AM – 12:00 PM)', 'सुबह की शिफ्ट (6:00 AM – 12:00 PM)')}</option>
                             <option value="Afternoon (1:00 PM - 4:00 PM)">{tr('Afternoon Shift (1:00 PM – 4:00 PM)', 'दोपहर की शिफ्ट (1:00 PM – 4:00 PM)')}</option>
                             <option value="Evening (4:30 PM - 8:30 PM)">{tr('Evening Shift (4:30 PM – 8:30 PM)', 'शाम की शिफ्ट (4:30 PM – 8:30 PM)')}</option>
                           </select>
+                          <p className="text-[11px] text-[#00A99D] font-semibold mt-1.5 flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
+                            <span>{tr('Plant is open 05:00 AM to 9:00 PM daily for walk-in pickups by anyone.', 'प्लांट सुबह 05:00 AM से रात 9:00 PM तक किसी भी व्यक्ति के सीधे आकर पानी लेने के लिए खुला रहता है।')}</span>
+                          </p>
                         </div>
                       </div>
 
@@ -885,6 +1014,19 @@ export default function BookWaterPage() {
                           )}
                         </div>
                       </div>
+
+                      {/* Plant Pickup Hours Notice */}
+                      <div className="p-4 rounded-2xl bg-[#F4FCFA] border border-[#00A99D]/20 text-xs text-[#052E2B] flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <Clock className="w-4 h-4 text-[#00A99D] shrink-0" />
+                          <span>
+                            {tr('Plant Direct Pickup: Open 05:00 AM – 9:00 PM (All 7 Days Near Pakri River)', 'प्लांट से सीधा उठाव: सुबह 05:00 AM से रात 9:00 PM तक खुला (सभी 7 दिन, पकड़ी नदी के पास)')}
+                          </span>
+                        </div>
+                        <span className="font-bold text-[#00A99D] text-[10px] bg-[#E8FFFA] px-2 py-0.5 rounded-full shrink-0">
+                          {tr('Walk-in Allowed', 'सीधा प्रवेश')}
+                        </span>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -974,6 +1116,10 @@ export default function BookWaterPage() {
                 <div className="flex justify-between">
                   <span className="text-[#4B6E6A]">{tr('First Delivery Date:', 'पहली डिलीवरी तारीख:')}</span>
                   <span className="font-bold text-[#00A99D]">{formData.startDate}</span>
+                </div>
+                <div className="pt-2 border-t border-[#00A99D]/15 text-[11px] text-[#00A99D] font-semibold flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                  <span>{tr('Direct Plant Pickup is open 05:00 AM – 9:00 PM daily near Pakri River.', 'सीधे प्लांट से पानी लेने की सुविधा रोज़ाना सुबह 05:00 AM से रात 9:00 PM तक खुली है।')}</span>
                 </div>
               </div>
 

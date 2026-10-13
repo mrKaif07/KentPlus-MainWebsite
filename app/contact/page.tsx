@@ -107,9 +107,9 @@ export default function ContactPage() {
                     {[
                       {
                         icon: Phone,
-                        title: tr('Customer Helpline', 'कस्टमर हेल्पलाइन'),
+                        title: tr('Customer Helpline & Plant Desk', 'कस्टमर हेल्पलाइन व प्लांट डेस्क'),
                         primary: BRAND.phone,
-                        sub: tr('6:00 AM - 9:00 PM Daily', 'सुबह 6:00 से रात 9:00 बजे तक (रोज़ाना)')
+                        sub: tr('5:00 AM - 9:00 PM Daily', 'सुबह 5:00 से रात 9:00 बजे तक (रोज़ाना)')
                       },
                       ...(BRAND.email ? [{
                         icon: Mail,
@@ -124,15 +124,15 @@ export default function ContactPage() {
                       }]),
                       {
                         icon: MapPin,
-                        title: tr('Main Plant & Central Operations', 'मेन प्लांट एवं वितरण संचालन'),
+                        title: tr('Main Plant & Direct Pickup', 'मेन प्लांट एवं सीधा उठाव'),
                         primary: tr('Main Plant: Near Pakri River', 'मेन प्लांट: पकड़ी नदी के पास'),
-                        sub: tr('Muzaffarpur • Serving Bhagwanpur, Marwan, Kharauna, Patahi & 15+ areas', 'मुजफ्फरपुर • भगवानपुर, मरवां, खरौना, पताही सहित 15+ इलाकों में सेवा')
+                        sub: tr('Open 5:00 AM – 9:00 PM Daily • Anyone can get water directly from the plant', 'रोज़ाना सुबह 5:00 से रात 9:00 बजे तक खुला • कोई भी सीधे प्लांट से पानी ले सकता है')
                       },
                       {
                         icon: Clock,
-                        title: tr('Delivery Windows', 'डिलीवरी का समय'),
-                        primary: tr('Morning Slot: 6:30 AM – 9:30 AM', 'सुबह की शिफ्ट: 6:30 AM – 9:30 AM'),
-                        sub: tr('Evening Slot: 4:30 PM – 8:30 PM', 'शाम की शिफ्ट: 4:30 PM – 8:30 PM')
+                        title: tr('Plant & Delivery Windows', 'प्लांट व डिलीवरी का समय'),
+                        primary: tr('Plant Pickup: 5:00 AM – 9:00 PM (All 7 Days)', 'सीधा उठाव: सुबह 5:00 AM – रात 9:00 PM (सभी 7 दिन)'),
+                        sub: tr('Route Delivery: Morning (6:00 AM - 12:00 PM) & Evening (4:30 PM - 8:30 PM)', 'रूट डिलीवरी: सुबह (6:00 AM - 12:00 PM) एवं शाम (4:30 PM - 8:30 PM)')
                       },
                     ].map((item) => (
                       <div key={item.title} className="flex items-start gap-4">

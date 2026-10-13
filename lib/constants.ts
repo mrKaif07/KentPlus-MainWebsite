@@ -13,6 +13,10 @@ export const BRAND = {
   email: '', // Pending (will be updated later)
   address: 'Main Plant: Near Pakri River, Muzaffarpur, Bihar',
   plantLocation: 'Near Pakri River',
+  plantOperatingHours: '5:00 AM – 9:00 PM (All 7 Days)',
+  plantHoursShort: '5:00 AM – 9:00 PM',
+  plantPickupNoticeEn: 'Anyone can get 95% pure drinking water directly from our main plant from 5:00 AM to 9:00 PM daily.',
+  plantPickupNoticeHi: 'कोई भी व्यक्ति रोज़ाना सुबह 5:00 बजे से रात 9:00 बजे तक सीधे हमारे प्लांट से ताज़ा पानी ले सकता है।',
 };
 
 export const COLORS = {
@@ -340,6 +344,7 @@ export const ISSUE_TYPES = [
 ];
 
 export const DELIVERY_TIMES = [
+  '5:00 AM – 9:00 PM (Direct Plant Pickup)',
   '6:00–8:00 AM',
   '8:00–10:00 AM',
   '10:00–12:00 PM',

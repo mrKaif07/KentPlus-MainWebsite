@@ -6,58 +6,168 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Droplets, Check, ArrowRight, ArrowLeft, MapPin, User,
   Calendar, CreditCard, ShieldCheck, CheckCircle2, Sparkles, Phone, Clock,
-  Building, Home, Shield, Waves, ChevronRight
+  Building, Home, Shield, Waves, ChevronRight, AlertCircle
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-const STEPS = [
-  { id: 1, name: 'Personal Details', short: 'Contact' },
-  { id: 2, name: 'Delivery Address', short: 'Address' },
-  { id: 3, name: 'Water Plan', short: 'Plan' },
-  { id: 4, name: 'Deposit & Billing', short: 'Billing' },
-  { id: 5, name: 'Confirm & Book', short: 'Confirm' }
-];
-
-const SOUTH_DELHI_AREAS = [
-  'Saket', 'Malviya Nagar', 'Lajpat Nagar', 'Greater Kailash (GK 1 & 2)',
-  'Vasant Kunj', 'Hauz Khas', 'South Extension', 'Chirag Delhi & Panchsheel'
-];
+import { useLanguage } from '@/context/LanguageContext';
+import { AREAS as SERVICE_AREAS, AREA_TIMELINES, getDefaultDeliveryDateForArea } from '@/lib/constants';
 
 export default function BookWaterPage() {
+  const { tr, isHi } = useLanguage();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [orderId, setOrderId] = useState('');
 
-  // Form state (using static default date to allow Next.js prerender without errors)
+  const steps = [
+    { id: 1, name: tr('Personal Details', 'व्यक्तिगत जानकारी'), short: tr('Contact', 'संपर्क') },
+    { id: 2, name: tr('Delivery Address', 'डिलीवरी का पता'), short: tr('Address', 'पता') },
+    { id: 3, name: tr('Water Plan', 'पानी का प्लान'), short: tr('Plan', 'प्लान') },
+    { id: 4, name: tr('Deposit & Billing', 'सिक्योरिटी व बिलिंग'), short: tr('Billing', 'बिलिंग') },
+    { id: 5, name: tr('Confirm & Book', 'ऑर्डर पक्का करें'), short: tr('Confirm', 'पुष्टि') }
+  ];
+
+  // Form state (initialized with Bhagwanpur's default timeline)
+  const initialTimeline = AREA_TIMELINES['Bhagwanpur'];
   const [formData, setFormData] = useState({
     customerType: 'Home',
     fullName: '',
     phone: '',
     email: '',
-    area: 'Saket',
+    area: 'Bhagwanpur',
     address: '',
     floor: 'Ground Floor',
     hasLift: 'Yes',
     landmark: '',
     cansPerDelivery: 2,
-    deliveryFrequency: 'Daily',
-    timeSlot: 'Morning (6:30 AM - 9:30 AM)',
-    startDate: '2026-10-10',
+    deliveryFrequency: initialTimeline?.defaultFrequencyEn || 'Daily',
+    timeSlot: initialTimeline?.defaultShiftEn || 'Morning (6:00 AM - 12:00 PM)',
+    startDate: '2026-10-13',
     billingType: 'Monthly Postpaid Ledger',
     needDispenserStand: false,
     notes: ''
   });
 
-  // Client-side date initialization
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [preselectedInfo, setPreselectedInfo] = useState<{ area?: string; date?: string; slot?: string } | null>(null);
+
+  // Apply default delivery timeline whenever area is selected
+  const applyAreaDefaultTimeline = (areaName: string, explicitDate?: string, explicitSlot?: string) => {
+    const timeline = AREA_TIMELINES[areaName] || AREA_TIMELINES['Bhagwanpur'];
+    const calculatedDate = explicitDate || getDefaultDeliveryDateForArea(areaName);
+    const calculatedSlot = explicitSlot || timeline?.defaultShiftEn || 'Morning (6:00 AM - 12:00 PM)';
+    const calculatedFreq = timeline?.defaultFrequencyEn || 'Daily';
+
+    setFormData(prev => ({
+      ...prev,
+      area: areaName,
+      deliveryFrequency: calculatedFreq,
+      timeSlot: calculatedSlot,
+      startDate: calculatedDate,
+    }));
+
+    setErrors(prev => {
+      const copy = { ...prev };
+      delete copy.area;
+      return copy;
+    });
+  };
+
+  // Client-side date and URL parameter initialization
   useEffect(() => {
     try {
-      const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-      setFormData(prev => ({ ...prev, startDate: tomorrow }));
+      let targetArea = 'Bhagwanpur';
+      let targetDate: string | undefined = undefined;
+      let targetSlot: string | undefined = undefined;
+
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const areaParam = params.get('area');
+        const dateParam = params.get('date');
+        const slotParam = params.get('slot');
+
+        if (areaParam && SERVICE_AREAS.includes(areaParam)) {
+          targetArea = areaParam;
+        }
+
+        if (dateParam && dateParam.trim().length > 0) {
+          targetDate = dateParam.trim();
+        }
+
+        if (slotParam) {
+          if (slotParam.toLowerCase().includes('morning') || slotParam.includes('6:00') || slotParam.includes('12:00')) {
+            targetSlot = 'Morning (6:00 AM - 12:00 PM)';
+          } else if (slotParam.toLowerCase().includes('afternoon') || slotParam.includes('1:00') || slotParam.includes('4:00')) {
+            targetSlot = 'Afternoon (1:00 PM - 4:00 PM)';
+          } else if (slotParam.toLowerCase().includes('evening')) {
+            targetSlot = 'Evening (4:30 PM - 8:30 PM)';
+          }
+        }
+
+        if (areaParam || dateParam || slotParam) {
+          setPreselectedInfo({ area: targetArea, date: targetDate, slot: targetSlot });
+        }
+      }
+
+      applyAreaDefaultTimeline(targetArea, targetDate, targetSlot);
     } catch {
       // fallback
     }
   }, []);
+
+  const currentTimeline = AREA_TIMELINES[formData.area] || AREA_TIMELINES['Bhagwanpur'];
+
+  const validateStep = (currentStep: number): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (currentStep === 1) {
+      if (!formData.fullName.trim() || formData.fullName.trim().length < 2) {
+        newErrors.fullName = tr(
+          'Please enter your full name (minimum 2 characters)',
+          'कृपया अपना पूरा नाम दर्ज करें (कम से कम 2 अक्षर)'
+        );
+      }
+      const cleanPhone = formData.phone.replace(/[\s\-\+]/g, '');
+      const validPhoneRegex = /^(\d{10}|91\d{10})$/;
+      if (!cleanPhone || !validPhoneRegex.test(cleanPhone)) {
+        newErrors.phone = tr(
+          'Please enter a valid 10-digit mobile number',
+          'कृपया 10 अंकों का सही मोबाइल नंबर दर्ज करें'
+        );
+      }
+      if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+        newErrors.email = tr(
+          'Please enter a valid email address or leave blank',
+          'कृपया सही ईमेल पता दर्ज करें या खाली छोड़ें'
+        );
+      }
+    }
+
+    if (currentStep === 2) {
+      if (!formData.area) {
+        newErrors.area = tr('Please select your service area', 'कृपया अपना इलाका चुनें');
+      }
+      if (!formData.address.trim() || formData.address.trim().length < 5) {
+        newErrors.address = tr(
+          'Complete house/flat number and street address is required (minimum 5 characters)',
+          'मकान/फ़्लैट नंबर और गली का पूरा पता आवश्यक है (कम से कम 5 अक्षर)'
+        );
+      }
+    }
+
+    if (currentStep === 3) {
+      if (!formData.cansPerDelivery || formData.cansPerDelivery < 1) {
+        newErrors.cansPerDelivery = tr('Please select at least 1 can', 'कम से कम 1 जार चुनें');
+      }
+      if (!formData.startDate) {
+        newErrors.startDate = tr('Please choose a start date', 'शुरुआत की तारीख चुनें');
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const pricePerCan = 65;
   const depositPerCan = 150;
@@ -68,6 +178,18 @@ export default function BookWaterPage() {
   const firstMonthTotal = monthlyWaterEst + depositTotal + dispenserCost;
 
   const handleNext = () => {
+    if (step === 1) {
+      setTouched(prev => ({ ...prev, fullName: true, phone: true, email: true }));
+    } else if (step === 2) {
+      setTouched(prev => ({ ...prev, area: true, address: true }));
+    } else if (step === 3) {
+      setTouched(prev => ({ ...prev, cansPerDelivery: true, startDate: true }));
+    }
+
+    if (!validateStep(step)) {
+      return;
+    }
+
     if (step < 5) setStep(step + 1);
   };
 
@@ -76,6 +198,11 @@ export default function BookWaterPage() {
   };
 
   const handleCompleteOrder = () => {
+    if (!validateStep(1) || !validateStep(2)) {
+      setStep(!validateStep(1) ? 1 : 2);
+      return;
+    }
+
     const generatedId = `KP-${Math.floor(100000 + Math.random() * 900000)}`;
     setOrderId(generatedId);
 
@@ -90,6 +217,7 @@ export default function BookWaterPage() {
         frequency: formData.deliveryFrequency,
         cansPerDelivery: formData.cansPerDelivery,
         slot: formData.timeSlot,
+        startDate: formData.startDate,
         createdAt: new Date().toISOString()
       });
       localStorage.setItem('kentplus_subscriptions', JSON.stringify(existing));
@@ -117,14 +245,39 @@ export default function BookWaterPage() {
             className="text-center mb-10"
           >
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-[#E8FFFA] border border-[#00A99D]/30 text-[#00A99D] mb-3">
-              <Droplets className="w-3.5 h-3.5 fill-[#00A99D]" /> Instant South Delhi Activation
+              <Droplets className="w-3.5 h-3.5 fill-[#00A99D]" /> {tr('Instant Doorstep Activation', 'तुरंत घर तक सेवा शुरू')}
             </span>
             <h1 className="text-3xl sm:text-5xl font-black text-[#052E2B] tracking-tight">
-              Start Kent Plus <span className="gradient-text">Daily Water Supply</span>
+              {tr('Start Kent Plus', 'केंट प्लस')} <span className="gradient-text">{tr('Daily Water Supply', 'दैनिक पानी सप्लाई शुरू करें')}</span>
             </h1>
             <p className="text-sm sm:text-base text-[#4B6E6A] mt-2 max-w-xl mx-auto">
-              Setup your daily delivery schedule in 3 minutes. Zero paperwork, 100% pure mineral water, and complimentary trial can on day one.
+              {tr(
+                'Setup your daily delivery schedule in 3 minutes. Zero paperwork, 95% pure mineral water, and complimentary trial can on day one.',
+                'केवल 3 मिनट में अपने रोज़ाना पानी का शेड्यूल सेट करें। कोई कागज़ी झंझट नहीं, 95% शुद्ध मिनरल पानी और पहले दिन मुफ़्त ट्रायल।'
+              )}
             </p>
+
+            {preselectedInfo && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-4 mx-auto max-w-xl p-3 rounded-2xl bg-[#E8FFFA] border border-[#00A99D]/40 text-center flex flex-wrap items-center justify-center gap-2 text-xs font-bold text-[#052E2B] shadow-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-[#00A99D] shrink-0" />
+                <span>{tr('Sector:', 'इलाका:')}</span>
+                <span className="text-[#00A99D] font-extrabold">{formData.area}</span>
+                {preselectedInfo.date && (
+                  <span className="bg-white px-2.5 py-0.5 rounded-full text-[11px] text-[#052E2B] border border-[#00A99D]/30 font-bold">
+                    📅 {tr('Date:', 'तारीख:')} {formData.startDate}
+                  </span>
+                )}
+                {preselectedInfo.slot && (
+                  <span className="bg-[#052E2B] text-[#36D399] px-2.5 py-0.5 rounded-full text-[11px] font-bold">
+                    ⏰ {formData.timeSlot}
+                  </span>
+                )}
+              </motion.div>
+            )}
           </motion.div>
 
           {!submitted ? (
@@ -137,7 +290,7 @@ export default function BookWaterPage() {
               {/* Stepper Progress Bar */}
               <div className="bg-[#052E2B] text-white px-6 py-6 border-b border-[#00A99D]/20">
                 <div className="flex items-center justify-between max-w-2xl mx-auto">
-                  {STEPS.map((s, idx) => {
+                  {steps.map((s, idx) => {
                     const isPassed = step > s.id;
                     const isCurrent = step === s.id;
                     return (
@@ -156,7 +309,7 @@ export default function BookWaterPage() {
                         <span className={`text-xs hidden md:inline font-semibold tracking-wide transition-colors ${isCurrent ? 'text-white' : isPassed ? 'text-[#36D399]' : 'text-white/40'}`}>
                           {s.name}
                         </span>
-                        {idx < STEPS.length - 1 && (
+                        {idx < steps.length - 1 && (
                           <div
                             className={`w-4 sm:w-10 lg:w-14 h-1 mx-1 rounded-full transition-all duration-500 hidden sm:block ${
                               step > s.id ? 'bg-[#36D399]' : 'bg-white/15'
@@ -184,10 +337,10 @@ export default function BookWaterPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <User className="w-3.5 h-3.5" /> Step 1 of 5
+                          <User className="w-3.5 h-3.5" /> {tr('Step 1 of 5', 'चरण 1 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Contact & Customer Type</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Who should we address the deliveries and daily digital updates to?</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Contact & Customer Type', 'ग्राहक प्रकार व संपर्क विवरण')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">{tr('Who should we address the deliveries and daily digital updates to?', 'हम पानी की डिलीवरी और दैनिक मैसेज किसके नाम भेजें?')}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
@@ -201,7 +354,7 @@ export default function BookWaterPage() {
                           }`}
                         >
                           <Home className={`w-4 h-4 ${formData.customerType === 'Home' ? 'text-[#00A99D]' : 'text-[#4B6E6A]'}`} />
-                          <span>Residential / Home</span>
+                          <span>{tr('Residential / Home', 'घर / परिवार के लिए')}</span>
                         </button>
                         <button
                           type="button"
@@ -213,46 +366,91 @@ export default function BookWaterPage() {
                           }`}
                         >
                           <Building className={`w-4 h-4 ${formData.customerType === 'Office' ? 'text-[#00A99D]' : 'text-[#4B6E6A]'}`} />
-                          <span>Office / Commercial</span>
+                          <span>{tr('Office / Commercial', 'ऑफ़िस / दुकान के लिए')}</span>
                         </button>
                       </div>
 
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Full Name *</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Full Name *', 'पूरा नाम *')}</label>
                           <input
                             type="text"
                             required
                             value={formData.fullName}
-                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                            placeholder="e.g. Rahul Sharma"
-                            className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] focus:border-[#00A99D] transition-all outline-none"
+                            onChange={(e) => {
+                              setFormData({ ...formData, fullName: e.target.value });
+                              if (errors.fullName) setErrors(prev => ({ ...prev, fullName: '' }));
+                            }}
+                            onBlur={() => setTouched(prev => ({ ...prev, fullName: true }))}
+                            placeholder={tr('e.g. Rahul Sharma', 'उदा. राहुल शर्मा')}
+                            className={`w-full px-4 py-3 rounded-xl border text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 outline-none transition-all ${
+                              touched.fullName && errors.fullName
+                                ? 'border-red-500 bg-red-50/20 focus:ring-red-400 focus:border-red-500'
+                                : 'border-[#00A99D]/30 bg-white focus:ring-[#00A99D] focus:border-[#00A99D]'
+                            }`}
                           />
+                          {touched.fullName && errors.fullName && (
+                            <span className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-1">
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {errors.fullName}
+                            </span>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">WhatsApp / Phone Number *</label>
+                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('WhatsApp / Phone Number *', 'व्हाट्सएप / मोबाइल नंबर *')}</label>
                             <input
                               type="tel"
                               required
                               value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              onChange={(e) => {
+                                setFormData({ ...formData, phone: e.target.value });
+                                if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                              }}
+                              onBlur={() => setTouched(prev => ({ ...prev, phone: true }))}
                               placeholder="e.g. 98111 22334"
-                              className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] focus:border-[#00A99D] transition-all outline-none"
+                              className={`w-full px-4 py-3 rounded-xl border text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 outline-none transition-all ${
+                                touched.phone && errors.phone
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-red-400 focus:border-red-500'
+                                  : 'border-[#00A99D]/30 bg-white focus:ring-[#00A99D] focus:border-[#00A99D]'
+                              }`}
                             />
-                            <span className="text-[11px] text-[#4B6E6A] mt-1 block">Used for daily delivery arrival SMS & driver contact</span>
+                            {touched.phone && errors.phone ? (
+                              <span className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-1">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {errors.phone}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-[#4B6E6A] mt-1 block">
+                                {tr('Used for daily delivery arrival SMS & driver contact', 'रोज़ाना डिलीवरी सूचना और डिलीवरी बॉय संपर्क के लिए')}
+                              </span>
+                            )}
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Email Address</label>
+                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Email Address (Optional)', 'ईमेल पता (वैकल्पिक)')}</label>
                             <input
                               type="email"
                               value={formData.email}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              onChange={(e) => {
+                                setFormData({ ...formData, email: e.target.value });
+                                if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                              }}
+                              onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
                               placeholder="rahul@example.com"
-                              className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] focus:border-[#00A99D] transition-all outline-none"
+                              className={`w-full px-4 py-3 rounded-xl border text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 outline-none transition-all ${
+                                touched.email && errors.email
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-red-400 focus:border-red-500'
+                                  : 'border-[#00A99D]/30 bg-white focus:ring-[#00A99D] focus:border-[#00A99D]'
+                              }`}
                             />
-                            <span className="text-[11px] text-[#4B6E6A] mt-1 block">For monthly automated GST invoice ledger</span>
+                            {touched.email && errors.email ? (
+                              <span className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-1">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {errors.email}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-[#4B6E6A] mt-1 block">
+                                {tr('For monthly automated GST invoice ledger', 'मासिक डिजिटल बिल और रसीद पाने के लिए')}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -271,75 +469,112 @@ export default function BookWaterPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <MapPin className="w-3.5 h-3.5" /> Step 2 of 5
+                          <MapPin className="w-3.5 h-3.5" /> {tr('Step 2 of 5', 'चरण 2 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Delivery Location</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Accurate address ensures our morning delivery route reaches your doorstep on time.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Delivery Location', 'डिलीवरी का पता')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr(
+                            'Accurate address ensures our morning delivery route reaches your doorstep on time.',
+                            'सटीक पते से हमारी सुबह की डिलीवरी गाड़ी आपके दरवाज़े पर समय पर पहुँचेगी।'
+                          )}
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">South Delhi Locality *</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Service Area / Locality *', 'सेवा क्षेत्र / मोहल्ला *')}</label>
                           <select
                             value={formData.area}
-                            onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                            onChange={(e) => applyAreaDefaultTimeline(e.target.value)}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
-                            {SOUTH_DELHI_AREAS.map((a) => (
+                            {SERVICE_AREAS.map((a) => (
                               <option key={a} value={a}>{a}</option>
                             ))}
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Floor Level</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Floor Level', 'मंज़िल (Floor)')}</label>
                           <select
                             value={formData.floor}
                             onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
-                            <option value="Ground Floor">Ground Floor</option>
-                            <option value="1st Floor">1st Floor</option>
-                            <option value="2nd Floor">2nd Floor</option>
-                            <option value="3rd Floor">3rd Floor</option>
-                            <option value="4th Floor & Above">4th Floor & Above</option>
+                            <option value="Ground Floor">{tr('Ground Floor', 'ग्राउंड फ़्लोर (निचली मंज़िल)')}</option>
+                            <option value="1st Floor">{tr('1st Floor', 'पहली मंज़िल')}</option>
+                            <option value="2nd Floor">{tr('2nd Floor', 'दूसरी मंज़िल')}</option>
+                            <option value="3rd Floor">{tr('3rd Floor', 'तीसरी मंज़िल')}</option>
+                            <option value="4th Floor & Above">{tr('4th Floor & Above', 'चौथी मंज़िल या ऊपर')}</option>
                           </select>
                         </div>
                       </div>
 
+                      {/* Automatic Default Timeline Feedback Card */}
+                      <motion.div
+                        key={formData.area}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 rounded-2xl bg-[#E8FFFA] border border-[#00A99D]/40 text-xs text-[#052E2B] space-y-1.5 shadow-sm"
+                      >
+                        <div className="flex items-center gap-2 font-bold text-[#00A99D]">
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-[#00A99D]" />
+                          <span>{tr('Default Delivery Timeline Applied Automatically', 'डिफ़ॉल्ट डिलीवरी टाइमलाइन स्वतः लागू कर दी गई है')}</span>
+                        </div>
+                        <p className="text-xs text-[#052E2B] leading-relaxed">
+                          {tr(
+                            `For ${formData.area}, your schedule is automatically set to ${currentTimeline.scheduleLabelEn} with Morning Shift (${currentTimeline.defaultShiftEn}), starting ${formData.startDate}. Everything is pre-configured by default — you don't have to change anything!`,
+                            `${formData.area} के लिए आपका डिलीवरी शेड्यूल स्वतः ${currentTimeline.scheduleLabelHi} एवं सुबह की शिफ्ट (${currentTimeline.defaultShiftHi}) पर तय कर दिया गया है (पहली डिलीवरी: ${formData.startDate})। सब कुछ पहले से सेट है — आपको कुछ भी बदलने की आवश्यकता नहीं है!`
+                          )}
+                        </p>
+                      </motion.div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Elevator / Lift Available?</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Elevator / Lift Available?', 'क्या बिल्डिंग में लिफ्ट है?')}</label>
                           <select
                             value={formData.hasLift}
                             onChange={(e) => setFormData({ ...formData, hasLift: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
-                            <option value="Yes">Yes, working passenger/service lift</option>
-                            <option value="No">No lift (stairs only)</option>
+                            <option value="Yes">{tr('Yes, working passenger/service lift', 'हाँ, चालू लिफ्ट उपलब्ध है')}</option>
+                            <option value="No">{tr('No lift (stairs only)', 'नहीं, केवल सीढ़ियाँ हैं')}</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Nearby Landmark</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Nearby Landmark', 'पास का कोई लैंडमार्क / पहचान चिह्न')}</label>
                           <input
                             type="text"
                             value={formData.landmark}
                             onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
-                            placeholder="e.g. Opposite Community Center"
+                            placeholder={tr('e.g. Opposite Community Center', 'उदा. मुख्य मंदिर या स्कूल के पास')}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Complete House / Flat & Street Address *</label>
+                        <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Complete House / Flat & Street Address *', 'मकान / फ़्लैट नंबर व पूरा पता *')}</label>
                         <textarea
                           rows={3}
                           required
                           value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          placeholder="e.g. Flat 302, Block M, Pocket 4, Saket"
-                          className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none resize-none"
+                          onChange={(e) => {
+                            setFormData({ ...formData, address: e.target.value });
+                            if (errors.address) setErrors(prev => ({ ...prev, address: '' }));
+                          }}
+                          onBlur={() => setTouched(prev => ({ ...prev, address: true }))}
+                          placeholder={tr('e.g. Near Main Chowk, House No. 12', 'उदा. मुख्य चौक के पास, मकान नंबर 12')}
+                          className={`w-full px-4 py-3 rounded-xl border text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 outline-none resize-none transition-all ${
+                            touched.address && errors.address
+                              ? 'border-red-500 bg-red-50/20 focus:ring-red-400 focus:border-red-500'
+                              : 'border-[#00A99D]/30 bg-white focus:ring-[#00A99D] focus:border-[#00A99D]'
+                          }`}
                         />
+                        {touched.address && errors.address && (
+                          <span className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-1">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {errors.address}
+                          </span>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -356,14 +591,37 @@ export default function BookWaterPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <Droplets className="w-3.5 h-3.5" /> Step 3 of 5
+                          <Droplets className="w-3.5 h-3.5" /> {tr('Step 3 of 5', 'चरण 3 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Quantity & Schedule</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Customize how many 20L jars you need and when they should be delivered.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Quantity & Schedule', 'मात्रा और डिलीवरी का समय')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr(
+                            'Customize how many 20L jars you need and when they should be delivered.',
+                            'तय करें कि आपको कितने 20 लीटर जार चाहिए और किस समय डिलीवरी चाहिए।'
+                          )}
+                        </p>
+                      </div>
+
+                      {/* Step 3 Default Timeline Notice */}
+                      <div className="p-3.5 rounded-2xl bg-[#E8FFFA] border border-[#00A99D]/40 text-xs text-[#052E2B] flex items-start gap-2.5 shadow-xs">
+                        <CheckCircle2 className="w-4 h-4 text-[#00A99D] shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-[#00A99D] uppercase tracking-wider text-[10px] block">
+                            {tr('Pre-Set Default Timeline Active', 'डिफ़ॉल्ट डिलीवरी टाइमलाइन सक्रिय')}
+                          </span>
+                          <p className="mt-0.5 text-xs text-[#052E2B] leading-relaxed">
+                            {tr(
+                              `Pre-configured for ${formData.area}: ${currentTimeline.scheduleLabelEn} • ${formData.timeSlot} • Start Date: ${formData.startDate}. This timeline is active by default — no changes are required!`,
+                              `${formData.area} के लिए पूर्व-निर्धारित: ${currentTimeline.scheduleLabelHi} • ${formData.timeSlot} • शुरुआत: ${formData.startDate}। यह टाइमलाइन डिफ़ॉल्ट रूप से सेट है — आपको कुछ भी बदलने की आवश्यकता नहीं है!`
+                            )}
+                          </p>
+                        </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#052E2B] mb-3">Number of 20L Cans Per Delivery</label>
+                        <label className="block text-xs font-semibold text-[#052E2B] mb-3">
+                          {tr('Number of 20L Cans Per Delivery', 'प्रति डिलीवरी 20 लीटर जार की संख्या')}
+                        </label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                           {[1, 2, 3, 4].map((num) => (
                             <button
@@ -376,8 +634,8 @@ export default function BookWaterPage() {
                                   : 'border-[#00A99D]/20 bg-white text-[#4B6E6A] hover:bg-[#F4FCFA]'
                               }`}
                             >
-                              <span className="text-lg">{num} Can{num > 1 ? 's' : ''}</span>
-                              <span className="text-[11px] font-normal text-[#4B6E6A]">({num * 20} Litres)</span>
+                              <span className="text-lg">{num} {tr(num > 1 ? 'Cans' : 'Can', 'जार')}</span>
+                              <span className="text-[11px] font-normal text-[#4B6E6A]">({num * 20} {tr('Litres', 'लीटर')})</span>
                             </button>
                           ))}
                         </div>
@@ -385,41 +643,64 @@ export default function BookWaterPage() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Delivery Frequency</label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-semibold text-[#052E2B]">{tr('Delivery Frequency', 'पानी कब-कब चाहिए?')}</label>
+                            <span className="text-[10px] font-bold text-[#00A99D] bg-[#E8FFFA] px-2 py-0.5 rounded-full">{tr('Default Set', 'डिफ़ॉल्ट सेट')}</span>
+                          </div>
                           <select
                             value={formData.deliveryFrequency}
                             onChange={(e) => setFormData({ ...formData, deliveryFrequency: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
-                            <option value="Daily">Daily Delivery (Every Morning)</option>
-                            <option value="Alternate Days">Alternate Days (Mon, Wed, Fri, Sun)</option>
-                            <option value="Weekdays Only">Weekdays Only (Mon to Fri - Offices)</option>
-                            <option value="On-Demand / Weekly">2 Times a Week</option>
+                            <option value="Daily">{tr('Daily Delivery (Every Morning)', 'दैनिक डिलीवरी (हर सुबह ताज़ा पानी)')}</option>
+                            <option value="Alternate Days">{tr('Alternate Days (Mon, Wed, Fri, Sun)', 'एक दिन छोड़कर (सोम, बुध, शुक्र, रवि)')}</option>
+                            <option value="Weekdays Only">{tr('Weekdays Only (Mon to Fri - Offices)', 'सिर्फ कार्यदिवस (सोमवार से शुक्रवार - ऑफ़िस)')}</option>
+                            <option value="On-Demand / Weekly">{tr('2 Times a Week', 'हफ़्ते में 2 बार')}</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Preferred Time Window</label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-semibold text-[#052E2B]">{tr('Preferred Time Window', 'पसंदीदा डिलीवरी समय')}</label>
+                            <span className="text-[10px] font-bold text-[#00A99D] bg-[#E8FFFA] px-2 py-0.5 rounded-full">{tr('Default Set', 'डिफ़ॉल्ट सेट')}</span>
+                          </div>
                           <select
                             value={formData.timeSlot}
                             onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
-                            <option value="Morning (6:30 AM - 9:30 AM)">Early Morning (6:30 AM – 9:30 AM)</option>
-                            <option value="Late Morning (9:30 AM - 12:00 PM)">Late Morning (9:30 AM – 12:00 PM)</option>
-                            <option value="Evening (4:30 PM - 8:30 PM)">Evening (4:30 PM – 8:30 PM)</option>
+                            <option value="Morning (6:00 AM - 12:00 PM)">{tr('Morning Shift (6:00 AM – 12:00 PM)', 'सुबह की शिफ्ट (6:00 AM – 12:00 PM)')}</option>
+                            <option value="Afternoon (1:00 PM - 4:00 PM)">{tr('Afternoon Shift (1:00 PM – 4:00 PM)', 'दोपहर की शिफ्ट (1:00 PM – 4:00 PM)')}</option>
+                            <option value="Evening (4:30 PM - 8:30 PM)">{tr('Evening Shift (4:30 PM – 8:30 PM)', 'शाम की शिफ्ट (4:30 PM – 8:30 PM)')}</option>
                           </select>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Subscription Start Date</label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-semibold text-[#052E2B]">{tr('Subscription Start Date *', 'डिलीवरी शुरू करने की तारीख *')}</label>
+                            <span className="text-[10px] font-bold text-[#00A99D] bg-[#E8FFFA] px-2 py-0.5 rounded-full">{tr('Next Route Run', 'अगली रूट रन')}</span>
+                          </div>
                           <input
                             type="date"
+                            required
                             value={formData.startDate}
-                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
+                            onChange={(e) => {
+                              setFormData({ ...formData, startDate: e.target.value });
+                              if (errors.startDate) setErrors(prev => ({ ...prev, startDate: '' }));
+                            }}
+                            onBlur={() => setTouched(prev => ({ ...prev, startDate: true }))}
+                            className={`w-full px-4 py-3 rounded-xl border text-sm text-[#052E2B] focus:ring-2 outline-none transition-all ${
+                              touched.startDate && errors.startDate
+                                ? 'border-red-500 bg-red-50/20 focus:ring-red-400 focus:border-red-500'
+                                : 'border-[#00A99D]/30 bg-white focus:ring-[#00A99D]'
+                            }`}
                           />
+                          {touched.startDate && errors.startDate && (
+                            <span className="text-[11px] text-red-600 font-semibold flex items-center gap-1 mt-1">
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {errors.startDate}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center pt-2 sm:pt-6">
                           <label className="flex items-center gap-3 p-3 rounded-xl border border-[#00A99D]/20 bg-[#E8FFFA]/40 hover:bg-[#E8FFFA] cursor-pointer select-none transition-all w-full">
@@ -430,7 +711,7 @@ export default function BookWaterPage() {
                               className="w-4 h-4 rounded text-[#00A99D] focus:ring-[#00A99D]"
                             />
                             <span className="text-xs text-[#052E2B] font-semibold">
-                              Add Table-Top Tap Stand (+₹350 one-time)
+                              {tr('Add Table-Top Tap Stand (+₹350 one-time)', 'टेबल-टॉप टैप स्टैंड जोड़ें (+₹350 एक बार)')}
                             </span>
                           </label>
                         </div>
@@ -450,77 +731,83 @@ export default function BookWaterPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <CreditCard className="w-3.5 h-3.5" /> Step 4 of 5
+                          <CreditCard className="w-3.5 h-3.5" /> {tr('Step 4 of 5', 'चरण 4 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Deposit & Billing Mode</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Transparent terms. No hidden charges or cancellation lock-ins.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Deposit & Billing Mode', 'सिक्योरिटी और बिलिंग का माध्यम')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr('Transparent terms. No hidden charges or cancellation lock-ins.', 'साफ़ और पारदर्शी हिसाब। कोई छुपा शुल्क नहीं और कभी भी बंद करने की आज़ादी।')}
+                        </p>
                       </div>
 
                       {/* Cost breakdown card */}
                       <div className="bg-[#E8FFFA] p-6 rounded-2xl border border-[#00A99D]/30 space-y-3.5 shadow-sm">
                         <div className="flex items-center justify-between pb-2 border-b border-[#00A99D]/20">
                           <h3 className="font-bold text-sm text-[#052E2B] flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-[#00A99D]" /> Price Estimation Breakdown:
+                            <Sparkles className="w-4 h-4 text-[#00A99D]" /> {tr('Price Estimation Breakdown:', 'अनुमानित बिल का विवरण:')}
                           </h3>
                           <span className="text-xs font-semibold text-[#00A99D] bg-white px-2.5 py-0.5 rounded-full border border-[#00A99D]/30">
-                            South Delhi Zone
+                            {tr('Active Service Zone', 'सक्रिय सेवा क्षेत्र')}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs text-[#052E2B]">
-                          <span>Water Can Rate (20L RO+UV + Minerals):</span>
-                          <span className="font-bold text-[#052E2B]">₹{pricePerCan} / can</span>
+                          <span>{tr('Water Can Rate (20L RO+UV + Minerals):', 'पानी जार का रेट (20L RO+UV + मिनरल्स):')}</span>
+                          <span className="font-bold text-[#052E2B]">₹{pricePerCan} {tr('/ can', '/ जार')}</span>
                         </div>
                         <div className="flex justify-between text-xs text-[#052E2B]">
-                          <span>Estimated monthly usage ({monthlyEstDays} deliveries × {formData.cansPerDelivery} cans):</span>
+                          <span>{tr(`Estimated monthly usage (${monthlyEstDays} deliveries × ${formData.cansPerDelivery} cans):`, `मासिक अनुमानित उपयोग (${monthlyEstDays} डिलीवरी × ${formData.cansPerDelivery} जार):`)}</span>
                           <span className="font-bold text-[#052E2B]">₹{monthlyWaterEst}</span>
                         </div>
                         <div className="flex justify-between text-xs text-[#052E2B]">
-                          <span>Refundable Can Deposit ({formData.cansPerDelivery} cans × ₹{depositPerCan}):</span>
-                          <span className="font-bold text-[#00A99D]">₹{depositTotal} (100% Refundable)</span>
+                          <span>{tr(`Refundable Can Deposit (${formData.cansPerDelivery} cans × ₹${depositPerCan}):`, `वापसी योग्य जार सिक्योरिटी (${formData.cansPerDelivery} जार × ₹${depositPerCan}):`)}</span>
+                          <span className="font-bold text-[#00A99D]">₹{depositTotal} ({tr('100% Refundable', '100% वापसी योग्य')})</span>
                         </div>
                         {formData.needDispenserStand && (
                           <div className="flex justify-between text-xs text-[#052E2B]">
-                            <span>Table-top Dispenser Stand:</span>
+                            <span>{tr('Table-top Dispenser Stand:', 'टेबल-टॉप स्टैंड कीमत:')}</span>
                             <span className="font-bold text-[#052E2B]">₹{dispenserCost}</span>
                           </div>
                         )}
                         <div className="pt-3 border-t border-[#00A99D]/20 flex justify-between items-center text-sm font-bold text-[#052E2B]">
-                          <span>First Month Estimated Total:</span>
+                          <span>{tr('First Month Estimated Total:', 'पहले महीने का कुल अनुमानित भुगतान:')}</span>
                           <span className="text-[#052E2B] text-lg font-extrabold">₹{firstMonthTotal}</span>
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#052E2B] mb-2">Preferred Payment Method</label>
+                        <label className="block text-xs font-semibold text-[#052E2B] mb-2">{tr('Preferred Payment Method', 'भुगतान का पसंदीदा तरीका')}</label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {['Monthly Postpaid Ledger (UPI / NetBanking)', 'Cash on Delivery Per Delivery', 'Digital Prepaid Wallet (10% Bonus)'].map((mode) => (
+                          {[
+                            { id: 'Monthly Postpaid Ledger', title: tr('Monthly Postpaid', 'मासिक बिल (महीने के अंत में)'), sub: tr('UPI / NetBanking at month-end', 'महीने के अंत में UPI या ऑनलाइन') },
+                            { id: 'Cash on Delivery', title: tr('Cash on Delivery', 'कैश ऑन डिलीवरी'), sub: tr('Pay driver per delivery', 'हर डिलीवरी पर नकद भुगतान') },
+                            { id: 'Digital Prepaid Wallet', title: tr('Prepaid Wallet', 'प्रीपेड वॉलेट (10% छूट)'), sub: tr('Instant recharge with bonus', 'रिचार्ज पर 10% अतिरिक्त छूट') }
+                          ].map((mode) => (
                             <button
-                              key={mode}
+                              key={mode.id}
                               type="button"
-                              onClick={() => setFormData({ ...formData, billingType: mode })}
+                              onClick={() => setFormData({ ...formData, billingType: mode.id })}
                               className={`p-4 rounded-xl border text-left text-xs font-semibold transition-all duration-200 ${
-                                formData.billingType === mode
+                                formData.billingType === mode.id
                                   ? 'border-[#00A99D] bg-white text-[#052E2B] ring-2 ring-[#00A99D]/30 shadow-md'
                                   : 'border-[#00A99D]/20 bg-[#F4FCFA] text-[#4B6E6A] hover:bg-white'
                               }`}
                             >
                               <div className="flex items-center gap-2 mb-1.5">
                                 <CreditCard className="w-4 h-4 text-[#00A99D]" />
-                                <span className="font-bold text-[#052E2B]">{mode.split('(')[0]}</span>
+                                <span className="font-bold text-[#052E2B]">{mode.title}</span>
                               </div>
-                              <span className="text-[11px] text-[#4B6E6A] block">{mode.includes('(') ? `(${mode.split('(')[1]}` : ''}</span>
+                              <span className="text-[11px] text-[#4B6E6A] block">{mode.sub}</span>
                             </button>
                           ))}
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Special Delivery Instructions</label>
+                        <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Special Delivery Instructions', 'डिलीवरी के लिए विशेष निर्देश (वैकल्पिक)')}</label>
                         <input
                           type="text"
                           value={formData.notes}
                           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                          placeholder="e.g. Ring bell twice, leave empty can outside door"
+                          placeholder={tr('e.g. Ring bell twice, leave empty can outside door', 'उदा. घंटी दो बार बजाएं, खाली जार दरवाज़े के पास रखें')}
                           className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                         />
                       </div>
@@ -539,48 +826,50 @@ export default function BookWaterPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Step 5 of 5
+                          <CheckCircle2 className="w-3.5 h-3.5" /> {tr('Step 5 of 5', 'चरण 5 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Review Your Subscription</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Please confirm all details before activating your delivery schedule.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Review Your Subscription', 'ऑर्डर की समीक्षा व पुष्टि')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr('Please confirm all details before activating your delivery schedule.', 'डिलीवरी शुरू करने से पहले कृपया अपने विवरण की जाँच कर लें।')}
+                        </p>
                       </div>
 
                       <div className="bg-[#F4FCFA] p-6 rounded-2xl border border-[#00A99D]/20 space-y-4 text-xs shadow-sm">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-[#00A99D]/20">
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Subscriber Details:</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Subscriber Details:', 'ग्राहक का विवरण:')}</span>
                             <span className="font-bold text-[#052E2B] text-sm block">{formData.fullName || 'Rahul Sharma'}</span>
                             <span className="text-[#4B6E6A] font-mono">{formData.phone || '98111 22334'}</span>
                           </div>
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Service Area & Floor:</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Service Area & Floor:', 'इलाका व मंज़िल:')}</span>
                             <span className="font-bold text-[#052E2B] text-sm block">{formData.area}</span>
-                            <span className="text-[#4B6E6A]">{formData.address || 'Address provided'} • {formData.floor}</span>
+                            <span className="text-[#4B6E6A]">{formData.address || tr('Address provided', 'दर्ज पता')} • {formData.floor}</span>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-2 pb-4 border-b border-[#00A99D]/20">
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Cans Per Trip:</span>
-                            <span className="font-bold text-[#052E2B] text-sm">{formData.cansPerDelivery} × 20L Can</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Cans Per Trip:', 'प्रति ट्रिप जार:')}</span>
+                            <span className="font-bold text-[#052E2B] text-sm">{formData.cansPerDelivery} × 20L {tr('Can', 'जार')}</span>
                           </div>
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Frequency:</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Frequency:', 'कब-कब:')}</span>
                             <span className="font-bold text-[#052E2B] text-sm">{formData.deliveryFrequency}</span>
                           </div>
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Delivery Slot:</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Delivery Slot:', 'समय स्लॉट:')}</span>
                             <span className="font-bold text-[#052E2B] text-sm">{formData.timeSlot.split('(')[0]}</span>
                           </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pt-1">
                           <div>
-                            <span className="text-[#4B6E6A] block">Deposit & Billing Mode:</span>
+                            <span className="text-[#4B6E6A] block">{tr('Deposit & Billing Mode:', 'भुगतान का तरीका:')}</span>
                             <span className="font-bold text-[#052E2B]">{formData.billingType}</span>
                           </div>
                           <div className="sm:text-right">
-                            <span className="text-[#4B6E6A] block">First Delivery On:</span>
+                            <span className="text-[#4B6E6A] block">{tr('First Delivery On:', 'पहली डिलीवरी तारीख:')}</span>
                             <span className="font-bold text-[#00A99D] text-base">{formData.startDate}</span>
                           </div>
                         </div>
@@ -589,8 +878,11 @@ export default function BookWaterPage() {
                       <div className="p-4 rounded-2xl bg-[#E8FFFA] border border-[#00A99D]/30 text-xs text-[#052E2B] flex items-start gap-3">
                         <ShieldCheck className="w-5 h-5 text-[#00A99D] shrink-0 mt-0.5" />
                         <div>
-                          <strong className="block font-semibold mb-0.5">Risk-Free 7-Day Satisfaction Guarantee:</strong>
-                          If you are not 100% satisfied with water taste, purity, or delivery promptness, return the cans for an immediate full deposit refund with zero questions asked.
+                          <strong className="block font-semibold mb-0.5">{tr('Risk-Free 7-Day Satisfaction Guarantee:', '7 दिन की संतुष्टि गारंटी:')}</strong>
+                          {tr(
+                            'If you are not 100% satisfied with water taste, purity, or delivery promptness, return the cans for an immediate full deposit refund with zero questions asked.',
+                            'यदि आप पानी के स्वाद, शुद्धता या डिलीवरी से पूरी तरह संतुष्ट नहीं हैं, तो जार वापस करें और अपनी पूरी सिक्योरिटी राशि बिना किसी सवाल के तुरंत वापस पाएं।'
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -607,14 +899,14 @@ export default function BookWaterPage() {
                       onClick={handlePrev}
                       className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-[#00A99D]/30 bg-white text-[#052E2B] hover:bg-[#E8FFFA] text-xs font-semibold transition-all"
                     >
-                      <ArrowLeft className="w-4 h-4" /> Previous Step
+                      <ArrowLeft className="w-4 h-4" /> {tr('Previous Step', 'पिछला चरण')}
                     </motion.button>
                   ) : (
                     <Link
                       href="/"
                       className="inline-flex items-center gap-1.5 text-xs text-[#4B6E6A] hover:text-[#052E2B] font-semibold transition-colors"
                     >
-                      <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+                      <ArrowLeft className="w-3.5 h-3.5" /> {tr('Back to Home', 'होमपेज पर जाएं')}
                     </Link>
                   )}
 
@@ -626,7 +918,7 @@ export default function BookWaterPage() {
                       onClick={handleNext}
                       className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#00A99D] hover:bg-[#36D399] hover:text-[#052E2B] text-white text-xs font-bold transition-all shadow-md shadow-[#00A99D]/20"
                     >
-                      Continue <ArrowRight className="w-4 h-4" />
+                      {tr('Continue', 'आगे बढ़ें')} <ArrowRight className="w-4 h-4" />
                     </motion.button>
                   ) : (
                     <motion.button
@@ -636,7 +928,7 @@ export default function BookWaterPage() {
                       onClick={handleCompleteOrder}
                       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#00A99D] hover:bg-[#36D399] hover:text-[#052E2B] text-white text-sm font-bold shadow-xl shadow-[#00A99D]/30 transition-all"
                     >
-                      <Sparkles className="w-4 h-4" /> Confirm & Activate Subscription
+                      <Sparkles className="w-4 h-4" /> {tr('Confirm & Activate Subscription', 'ऑर्डर पक्का करें व सेवा शुरू करें')}
                     </motion.button>
                   )}
                 </div>
@@ -654,30 +946,33 @@ export default function BookWaterPage() {
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <span className="text-xs font-bold text-[#00A99D] bg-[#E8FFFA] px-3.5 py-1 rounded-full border border-[#00A99D]/30">
-                Subscription Activated
+                {tr('Subscription Activated', 'सब्स्क्रिप्शन चालू हो गया')}
               </span>
               <h2 className="text-2xl sm:text-4xl font-black text-[#052E2B] mt-4 mb-2 tracking-tight">
-                Welcome to <span className="gradient-text">Kent Plus</span>, {formData.fullName || 'Neighbor'}!
+                {tr('Welcome to', 'केंट प्लस में आपका स्वागत है,')} <span className="gradient-text">Kent Plus</span>, {formData.fullName || tr('Neighbor', 'नमस्ते')}!
               </h2>
               <p className="text-sm sm:text-base text-[#4B6E6A] mb-8 max-w-md mx-auto">
-                Your daily water delivery subscription has been scheduled. Your local South Delhi route driver will deliver your fresh jars starting tomorrow morning.
+                {tr(
+                  'Your daily water delivery subscription has been scheduled. Your local route driver will deliver your fresh jars starting tomorrow morning.',
+                  'आपकी रोज़ाना पानी की डिलीवरी तय हो गई है। हमारे स्थानीय डिलीवरी बॉय द्वारा कल सुबह से ताज़ा जार पहुंचाना शुरू कर दिया जाएगा।'
+                )}
               </p>
 
               <div className="bg-[#F4FCFA] p-6 rounded-2xl border border-[#00A99D]/20 text-left mb-8 space-y-3 text-xs sm:text-sm">
                 <div className="flex justify-between items-center pb-2 border-b border-[#00A99D]/20">
-                  <span className="text-[#4B6E6A]">Subscription Ref:</span>
+                  <span className="text-[#4B6E6A]">{tr('Subscription Ref:', 'ऑर्डर संख्या:')}</span>
                   <span className="font-bold text-[#00A99D] font-mono text-base">{orderId}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#4B6E6A]">Delivery Address:</span>
+                  <span className="text-[#4B6E6A]">{tr('Delivery Address:', 'डिलीवरी का इलाका:')}</span>
                   <span className="font-semibold text-[#052E2B]">{formData.area}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#4B6E6A]">Scheduled Slot:</span>
+                  <span className="text-[#4B6E6A]">{tr('Scheduled Slot:', 'डिलीवरी समय:')}</span>
                   <span className="font-semibold text-[#052E2B]">{formData.timeSlot}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#4B6E6A]">First Delivery Date:</span>
+                  <span className="text-[#4B6E6A]">{tr('First Delivery Date:', 'पहली डिलीवरी तारीख:')}</span>
                   <span className="font-bold text-[#00A99D]">{formData.startDate}</span>
                 </div>
               </div>
@@ -687,13 +982,13 @@ export default function BookWaterPage() {
                   href="/"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#00A99D] hover:bg-[#36D399] hover:text-[#052E2B] text-white font-bold text-xs transition-all shadow-md"
                 >
-                  Return to Home
+                  {tr('Return to Home', 'होमपेज पर जाएं')}
                 </Link>
                 <Link
                   href="/contact"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-[#00A99D]/30 bg-white text-[#052E2B] hover:bg-[#E8FFFA] font-semibold text-xs transition-all"
                 >
-                  Contact Helpline
+                  {tr('Contact Helpline', 'हेल्पलाइन से बात करें')}
                 </Link>
               </div>
             </motion.div>

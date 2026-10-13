@@ -10,19 +10,29 @@ import {
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-const EVENT_TYPES = [
-  { id: 'Wedding', title: 'Wedding & Reception', icon: Heart, defaultGuests: 350, desc: 'Large guest gatherings & catering' },
-  { id: 'Corporate', title: 'Corporate Conference', icon: Briefcase, defaultGuests: 150, desc: 'Summits, seminars & meetings' },
-  { id: 'Party', title: 'Private Party / Birthday', icon: PartyPopper, defaultGuests: 80, desc: 'Home and club celebrations' },
-  { id: 'Religious', title: 'Pooja / Bhandara', icon: Flame, defaultGuests: 250, desc: 'Devotional feasts & community meals' },
-  { id: 'Sports', title: 'Sports Meet / Marathon', icon: Trophy, defaultGuests: 200, desc: 'High-hydration sports stations' }
-];
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function BookEventPage() {
+  const { tr, isHi } = useLanguage();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [bookingId, setBookingId] = useState('');
+
+  const eventTypes = [
+    { id: 'Wedding', title: tr('Wedding & Reception', 'शादी और रिसेप्शन'), icon: Heart, defaultGuests: 350, desc: tr('Large guest gatherings & catering', 'मेहमानों के लिए भोजन व स्वागत व्यवस्था') },
+    { id: 'Corporate', title: tr('Corporate Conference', 'कॉर्पोरेट मीटिंग / सेमिनार'), icon: Briefcase, defaultGuests: 150, desc: tr('Summits, seminars & meetings', 'ऑफ़िस व व्यावसायिक कार्यक्रम') },
+    { id: 'Party', title: tr('Private Party / Birthday', 'बर्थडे / पारिवारिक पार्टी'), icon: PartyPopper, defaultGuests: 80, desc: tr('Home and club celebrations', 'घर व हॉल का पारिवारिक जश्न') },
+    { id: 'Religious', title: tr('Pooja / Bhandara', 'पूजा / विशाल भंडारा'), icon: Flame, defaultGuests: 250, desc: tr('Devotional feasts & community meals', 'धार्मिक अनुष्ठान व सामाजिक भोज') },
+    { id: 'Sports', title: tr('Sports Meet / Marathon', 'खेल प्रतियोगिता / मैराथन'), icon: Trophy, defaultGuests: 200, desc: tr('High-hydration sports stations', 'खिलाड़ियों के लिए हाइड्रेशन स्टेशन') }
+  ];
+
+  const stepsList = [
+    tr('Contact', 'संपर्क'),
+    tr('Event Info', 'समारोह विवरण'),
+    tr('Venue Location', 'स्थान / वेन्यू'),
+    tr('Water Quantity', 'पानी की मात्रा'),
+    tr('Review & Book', 'पुष्टि करें')
+  ];
 
   // Form state (using static default date to prevent Next.js 16 prerender error)
   const [formData, setFormData] = useState({
@@ -34,7 +44,7 @@ export default function BookEventPage() {
     eventDate: '2026-10-15',
     eventDurationHours: 6,
     venueName: '',
-    venueArea: 'Saket',
+    venueArea: 'Bhagwanpur',
     venueAddress: '',
     venueGate: 'Main Gate 1',
     cansQuantity: 25,
@@ -108,13 +118,16 @@ export default function BookEventPage() {
             className="text-center mb-10"
           >
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-[#E8FFFA] border border-[#00A99D]/30 text-[#00A99D] mb-3">
-              <PartyPopper className="w-3.5 h-3.5" /> Event & Function Logistics
+              <PartyPopper className="w-3.5 h-3.5" /> {tr('Event & Function Logistics', 'शादी व समारोह के लिए पानी')}
             </span>
             <h1 className="text-3xl sm:text-5xl font-black text-[#052E2B] tracking-tight">
-              Book Bulk Water for <span className="gradient-text">Your Event</span>
+              {tr('Book Bulk Water for', 'अपने समारोह के लिए')} <span className="gradient-text">{tr('Your Event', 'थोक पानी बुक करें')}</span>
             </h1>
             <p className="text-sm sm:text-base text-[#4B6E6A] mt-2 max-w-xl mx-auto">
-              Guaranteed delivery on venue schedule. 20L sanitized jars, 250ml bottled water, and high-flow event dispensers across South Delhi.
+              {tr(
+                'Guaranteed delivery on venue schedule. 20L sanitized jars, 250ml bottled water, and high-flow event dispensers across all service areas.',
+                'तय समय पर कार्यक्रम स्थल तक सुरक्षित डिलीवरी। 20L सैनिटाइज़्ड जार, 250ml पैक पानी की बोतलें और स्टैंड्स की पूरी सुविधा।'
+              )}
             </p>
           </motion.div>
 
@@ -128,7 +141,7 @@ export default function BookEventPage() {
               {/* Stepper Progress Bar */}
               <div className="bg-[#052E2B] text-white px-6 py-6 border-b border-[#00A99D]/20">
                 <div className="flex items-center justify-between max-w-2xl mx-auto text-xs">
-                  {['Contact', 'Event Info', 'Venue Location', 'Water Quantity', 'Review & Book'].map((name, i) => {
+                  {stepsList.map((name, i) => {
                     const stepNum = i + 1;
                     const isPassed = step > stepNum;
                     const isCurrent = step === stepNum;
@@ -175,28 +188,30 @@ export default function BookEventPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <Users className="w-3.5 h-3.5" /> Step 1 of 5
+                          <Users className="w-3.5 h-3.5" /> {tr('Step 1 of 5', 'चरण 1 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Organizer & Coordinator Information</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Contact details of the caterer, planner, or host coordinating on site.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Organizer & Coordinator Information', 'आयोजक व संपर्क विवरण')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr('Contact details of the caterer, planner, or host coordinating on site.', 'स्थल पर समन्वय करने वाले कैटरर, आयोजक या परिवार के सदस्य का संपर्क नंबर।')}
+                        </p>
                       </div>
 
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Organizer / Host Name *</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Organizer / Host Name *', 'आयोजक / संपर्ककर्ता का नाम *')}</label>
                           <input
                             type="text"
                             required
                             value={formData.organizerName}
                             onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
-                            placeholder="e.g. Vikram Mehra (Catering Coordinator)"
+                            placeholder={tr('e.g. Vikram Mehra (Catering Coordinator)', 'उदा. विक्रम मेहरा (कैटरिंग प्रभारी / यजमान)')}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                           />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Direct Mobile Phone *</label>
+                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Direct Mobile Phone *', 'मोबाइल फोन नंबर *')}</label>
                             <input
                               type="tel"
                               required
@@ -205,10 +220,12 @@ export default function BookEventPage() {
                               placeholder="e.g. +91 98222 33445"
                               className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                             />
-                            <span className="text-[11px] text-[#4B6E6A] mt-1 block">Our dispatch driver will call this number at venue arrival</span>
+                            <span className="text-[11px] text-[#4B6E6A] mt-1 block">
+                              {tr('Our dispatch driver will call this number at venue arrival', 'डिलीवरी वाहन पहुँचते ही ड्राइवर इस नंबर पर कॉल करेगा')}
+                            </span>
                           </div>
                           <div>
-                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Email Address</label>
+                            <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Email Address', 'ईमेल पता (वैकल्पिक)')}</label>
                             <input
                               type="email"
                               value={formData.email}
@@ -216,7 +233,9 @@ export default function BookEventPage() {
                               placeholder="vikram@events.com"
                               className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                             />
-                            <span className="text-[11px] text-[#4B6E6A] mt-1 block">For invoice and dispatch manifest delivery</span>
+                            <span className="text-[11px] text-[#4B6E6A] mt-1 block">
+                              {tr('For invoice and dispatch manifest delivery', 'डिजिटल बिल व रसीद प्राप्त करने के लिए')}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -235,16 +254,18 @@ export default function BookEventPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <Calendar className="w-3.5 h-3.5" /> Step 2 of 5
+                          <Calendar className="w-3.5 h-3.5" /> {tr('Step 2 of 5', 'चरण 2 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Occasion & Gathering Scale</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Select the type of gathering and expected attendance.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Occasion & Gathering Scale', 'समारोह का प्रकार व लोगों की संख्या')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr('Select the type of gathering and expected attendance.', 'अपने कार्यक्रम का प्रकार और आने वाले मेहमानों की अनुमानित संख्या चुनें।')}
+                        </p>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-[#052E2B] mb-3">Event Occasion Type</label>
+                        <label className="block text-xs font-semibold text-[#052E2B] mb-3">{tr('Event Occasion Type', 'कार्यक्रम का प्रकार')}</label>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {EVENT_TYPES.map((t) => (
+                          {eventTypes.map((t) => (
                             <button
                               key={t.id}
                               type="button"
@@ -271,7 +292,7 @@ export default function BookEventPage() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Date of Event *</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Date of Event *', 'कार्यक्रम की तारीख *')}</label>
                           <input
                             type="date"
                             value={formData.eventDate}
@@ -280,7 +301,7 @@ export default function BookEventPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Expected Guests</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Expected Guests', 'अनुमानित मेहमान')}</label>
                           <input
                             type="number"
                             min="20"
@@ -291,16 +312,16 @@ export default function BookEventPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Event Duration (Hours)</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Event Duration (Hours)', 'समारोह की अवधि (घंटे)')}</label>
                           <select
                             value={formData.eventDurationHours}
                             onChange={(e) => setFormData({ ...formData, eventDurationHours: Number(e.target.value) })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
-                            <option value={4}>4 Hours (Half Day)</option>
-                            <option value={6}>6 Hours (Evening Function)</option>
-                            <option value={10}>10 Hours (Full Day Event)</option>
-                            <option value={24}>Full 24 Hours / 2-Day Setup</option>
+                            <option value={4}>{tr('4 Hours (Half Day)', '4 घंटे (आधा दिन)')}</option>
+                            <option value={6}>{tr('6 Hours (Evening Function)', '6 घंटे (शाम का समारोह)')}</option>
+                            <option value={10}>{tr('10 Hours (Full Day Event)', '10 घंटे (पूरे दिन का कार्यक्रम)')}</option>
+                            <option value={24}>{tr('Full 24 Hours / 2-Day Setup', 'पूरे 24 घंटे / 2 दिन का इंतज़ाम')}</option>
                           </select>
                         </div>
                       </div>
@@ -319,61 +340,71 @@ export default function BookEventPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <MapPin className="w-3.5 h-3.5" /> Step 3 of 5
+                          <MapPin className="w-3.5 h-3.5" /> {tr('Step 3 of 5', 'चरण 3 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Venue Location & Access Points</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Venue directions for unloading trucks and dispenser placement.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Venue Location & Access Points', 'कार्यक्रम स्थल व पता')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr('Venue directions for unloading trucks and dispenser placement.', 'गाड़ी खाली करने और जार रखने के लिए वेन्यू का सटीक पता व गेट।')}
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Venue / Banquet Name *</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Venue / Banquet Name *', 'हॉल / मैरिज लॉन / स्थल का नाम *')}</label>
                           <input
                             type="text"
                             required
                             value={formData.venueName}
                             onChange={(e) => setFormData({ ...formData, venueName: e.target.value })}
-                            placeholder="e.g. Tivoli Garden Resort / Grand Lawn"
+                            placeholder={tr('e.g. Tivoli Garden Resort / Grand Lawn', 'उदा. राज वाटिका / विवाह भवन')}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Locality / Sector *</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Locality / Sector *', 'इलाका / सेवा क्षेत्र *')}</label>
                           <select
                             value={formData.venueArea}
                             onChange={(e) => setFormData({ ...formData, venueArea: e.target.value })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none"
                           >
-                            <option value="Saket">Saket</option>
-                            <option value="Chattarpur Farm Houses">Chattarpur Farm Houses</option>
-                            <option value="Mehrauli / MG Road">Mehrauli / MG Road</option>
-                            <option value="Malviya Nagar">Malviya Nagar</option>
-                            <option value="Greater Kailash">Greater Kailash</option>
-                            <option value="Vasant Kunj Farm / Banquets">Vasant Kunj Farm / Banquets</option>
-                            <option value="Lajpat Nagar">Lajpat Nagar</option>
-                            <option value="Other Delhi Venue">Other Delhi Location</option>
+                            <option value="Pakri">Pakri</option>
+                            <option value="Vastu Vihar Pakri">Vastu Vihar Pakri</option>
+                            <option value="Kodaria">Kodaria</option>
+                            <option value="Bathnadeeh">Bathnadeeh</option>
+                            <option value="Madhuban">Madhuban</option>
+                            <option value="Chamarua">Chamarua</option>
+                            <option value="Marwan">Marwan</option>
+                            <option value="Kharauna">Kharauna</option>
+                            <option value="Navodya Vidyalaya Kharauna">Navodya Vidyalaya Kharauna</option>
+                            <option value="Sumera">Sumera</option>
+                            <option value="Patahi">Patahi</option>
+                            <option value="Madapur">Madapur</option>
+                            <option value="Bathna Ram">Bathna Ram</option>
+                            <option value="Bhagwanpur">Bhagwanpur</option>
+                            <option value="Yadav Nagar">Yadav Nagar</option>
+                            <option value="Other Nearby Location">{tr('Other Nearby Location', 'अन्य नज़दीकी क्षेत्र')}</option>
                           </select>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Full Venue Address</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Full Venue Address', 'वेन्यू का पूरा पता')}</label>
                           <input
                             type="text"
                             value={formData.venueAddress}
                             onChange={(e) => setFormData({ ...formData, venueAddress: e.target.value })}
-                            placeholder="Gate No., Pillar No. or landmark"
+                            placeholder={tr('Gate No., Pillar No. or landmark', 'गेट नं., लैंडमार्क या मुख्य सड़क')}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">Unloading Entry Gate / Contact</label>
+                          <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">{tr('Unloading Entry Gate / Contact', 'गाड़ी अनलोडिंग का गेट या संपर्क व्यक्ति')}</label>
                           <input
                             type="text"
                             value={formData.venueGate}
                             onChange={(e) => setFormData({ ...formData, venueGate: e.target.value })}
-                            placeholder="e.g. Service Gate 3 (Kitchen Entry)"
+                            placeholder={tr('e.g. Service Gate 3 (Kitchen Entry)', 'उदा. सर्विस गेट 3 (रसोई के पास वाला गेट)')}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] placeholder:text-[#4B6E6A]/50 focus:ring-2 focus:ring-[#00A99D] outline-none"
                           />
                         </div>
@@ -393,16 +424,21 @@ export default function BookEventPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <Package className="w-3.5 h-3.5" /> Step 4 of 5
+                          <Package className="w-3.5 h-3.5" /> {tr('Step 4 of 5', 'चरण 4 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Water Quantity & Accessories</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Based on {formData.guestCount} guests, our algorithm calculates optimal buffer capacity.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Water Quantity & Accessories', 'पानी की मात्रा व अतिरिक्त सामग्री')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr(
+                            `Based on ${formData.guestCount} guests, our algorithm calculates optimal buffer capacity.`,
+                            `${formData.guestCount} मेहमानों के अनुसार हमने पानी की सही मात्रा का अनुमान लगाया है।`
+                          )}
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="bg-[#E8FFFA] p-5 rounded-2xl border border-[#00A99D]/30">
                           <label className="block text-xs font-bold text-[#052E2B] mb-1">
-                            20-Litre Drinking Jars (Calculated: {estimatedCans} cans)
+                            {tr(`20-Litre Drinking Jars (Calculated: ${estimatedCans} cans)`, `20 लीटर जार (अनुमानित: ${estimatedCans} जार)`)}
                           </label>
                           <input
                             type="number"
@@ -411,12 +447,14 @@ export default function BookEventPage() {
                             onChange={(e) => setFormData({ ...formData, cansQuantity: Number(e.target.value) })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none mt-2"
                           />
-                          <span className="text-[11px] text-[#4B6E6A] mt-1.5 block">For buffet stations, kitchen cooking, and service counters</span>
+                          <span className="text-[11px] text-[#4B6E6A] mt-1.5 block">
+                            {tr('For buffet stations, kitchen cooking, and service counters', 'भोजन व्यवस्था, रसोई और पानी के स्टॉलों के लिए')}
+                          </span>
                         </div>
 
                         <div className="bg-[#E8FFFA] p-5 rounded-2xl border border-[#00A99D]/30">
                           <label className="block text-xs font-bold text-[#052E2B] mb-1">
-                            250ml Bottled Water (Guests tables)
+                            {tr('250ml Bottled Water (Guests tables)', '250ml पैक बोतलें (मेहमानों की टेबल के लिए)')}
                           </label>
                           <input
                             type="number"
@@ -426,12 +464,14 @@ export default function BookEventPage() {
                             onChange={(e) => setFormData({ ...formData, bottles250ml: Number(e.target.value) })}
                             className="w-full px-4 py-3 rounded-xl border border-[#00A99D]/30 bg-white text-sm text-[#052E2B] focus:ring-2 focus:ring-[#00A99D] outline-none mt-2"
                           />
-                          <span className="text-[11px] text-[#4B6E6A] mt-1.5 block">Custom sealed packaged mineral water bottles in boxes</span>
+                          <span className="text-[11px] text-[#4B6E6A] mt-1.5 block">
+                            {tr('Custom sealed packaged mineral water bottles in boxes', 'सील पैक मिनरल वॉटर बोतलों की पेटियां')}
+                          </span>
                         </div>
                       </div>
 
                       <div className="space-y-3 pt-2">
-                        <h3 className="text-xs font-bold text-[#052E2B] uppercase tracking-wider">Event Equipment Options:</h3>
+                        <h3 className="text-xs font-bold text-[#052E2B] uppercase tracking-wider">{tr('Event Equipment Options:', 'अतिरिक्त सुविधाएं / उपकरण:')}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <label className="flex items-center gap-3 p-4 rounded-xl border border-[#00A99D]/20 bg-white hover:bg-[#E8FFFA]/40 cursor-pointer transition-all">
                             <input
@@ -440,7 +480,9 @@ export default function BookEventPage() {
                               onChange={(e) => setFormData({ ...formData, needPaperCups: e.target.checked })}
                               className="w-4 h-4 text-[#00A99D] rounded focus:ring-[#00A99D]"
                             />
-                            <span className="text-xs font-semibold text-[#052E2B]">Biodegradable Paper Cups (500 pcs)</span>
+                            <span className="text-xs font-semibold text-[#052E2B]">
+                              {tr('Biodegradable Paper Cups (500 pcs)', 'इको-फ्रेंडली पेपर कप (500 पीस)')}
+                            </span>
                           </label>
                           <label className="flex items-center gap-3 p-4 rounded-xl border border-[#00A99D]/20 bg-white hover:bg-[#E8FFFA]/40 cursor-pointer transition-all">
                             <input
@@ -449,7 +491,9 @@ export default function BookEventPage() {
                               onChange={(e) => setFormData({ ...formData, needChilledIceBoxes: e.target.checked })}
                               className="w-4 h-4 text-[#00A99D] rounded focus:ring-[#00A99D]"
                             />
-                            <span className="text-xs font-semibold text-[#052E2B]">Insulated Chilled Storage Boxes</span>
+                            <span className="text-xs font-semibold text-[#052E2B]">
+                              {tr('Insulated Chilled Storage Boxes', 'ठंडा रखने के लिए आइस बॉक्स')}
+                            </span>
                           </label>
                         </div>
                       </div>
@@ -468,49 +512,54 @@ export default function BookEventPage() {
                     >
                       <div className="border-b border-[#E8FFFA] pb-4">
                         <div className="flex items-center gap-2 text-[#00A99D] text-xs font-bold uppercase tracking-wider mb-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Step 5 of 5
+                          <CheckCircle2 className="w-3.5 h-3.5" /> {tr('Step 5 of 5', 'चरण 5 / 5')}
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">Review Booking Summary</h2>
-                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">Our event fleet manager will confirm delivery logistics within 1 hour.</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-[#052E2B]">{tr('Review Booking Summary', 'बुकिंग विवरण की पुष्टि')}</h2>
+                        <p className="text-xs sm:text-sm text-[#4B6E6A] mt-0.5">
+                          {tr('Our event fleet manager will confirm delivery logistics within 1 hour.', 'हमारे इवेंट मैनेजर 1 घंटे के भीतर डिलीवरी समय की पुष्टि करेंगे।')}
+                        </p>
                       </div>
 
                       <div className="bg-[#F4FCFA] p-6 rounded-2xl border border-[#00A99D]/20 space-y-4 text-xs shadow-sm">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3 border-b border-[#00A99D]/20">
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Occasion:</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Occasion:', 'कार्यक्रम प्रकार:')}</span>
                             <span className="font-bold text-[#052E2B] text-sm block">{formData.eventType}</span>
-                            <span className="text-[#4B6E6A] mt-0.5">{formData.guestCount} Estimated Attendees</span>
+                            <span className="text-[#4B6E6A] mt-0.5">{formData.guestCount} {tr('Estimated Attendees', 'अनुमानित मेहमान')}</span>
                           </div>
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Event Date:</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Event Date:', 'समारोह की तारीख:')}</span>
                             <span className="font-bold text-[#00A99D] text-base block">{formData.eventDate}</span>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3 border-b border-[#00A99D]/20">
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Venue:</span>
-                            <span className="font-bold text-[#052E2B] block">{formData.venueName || 'Banquet Hall'}</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Venue:', 'कार्यक्रम स्थल:')}</span>
+                            <span className="font-bold text-[#052E2B] block">{formData.venueName || tr('Banquet Hall', 'वेन्यू हॉल')}</span>
                             <span className="text-[#4B6E6A] mt-0.5">{formData.venueArea} ({formData.venueGate})</span>
                           </div>
                           <div>
-                            <span className="text-[#4B6E6A] block mb-1">Water Order:</span>
-                            <span className="font-bold text-[#052E2B] block">{formData.cansQuantity || estimatedCans} × 20L Jars</span>
-                            <span className="text-[#4B6E6A] mt-0.5">{formData.bottles250ml} × 250ml Bottles</span>
+                            <span className="text-[#4B6E6A] block mb-1">{tr('Water Order:', 'पानी की बुकिंग:')}</span>
+                            <span className="font-bold text-[#052E2B] block">{formData.cansQuantity || estimatedCans} × 20L {tr('Jars', 'जार')}</span>
+                            <span className="text-[#4B6E6A] mt-0.5">{formData.bottles250ml} × 250ml {tr('Bottles', 'बोतलें')}</span>
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-[#4B6E6A] block mb-1">On-Site Coordinator:</span>
-                          <span className="font-bold text-[#052E2B]">{formData.organizerName || 'Event Host'} • {formData.phone || '+91 98222 33445'}</span>
+                          <span className="text-[#4B6E6A] block mb-1">{tr('On-Site Coordinator:', 'स्थल पर संपर्क:')}</span>
+                          <span className="font-bold text-[#052E2B]">{formData.organizerName || tr('Event Host', 'आयोजक')} • {formData.phone || '+91 98222 33445'}</span>
                         </div>
                       </div>
 
                       <div className="p-4 rounded-2xl bg-[#E8FFFA] border border-[#00A99D]/30 text-xs text-[#052E2B] flex items-start gap-3">
                         <ShieldCheck className="w-5 h-5 text-[#00A99D] shrink-0 mt-0.5" />
                         <div>
-                          <strong className="block font-semibold mb-0.5">Free Unused Can Return Policy:</strong>
-                          Unopened sealed 20L cans exceeding actual consumption can be returned for 100% full credit on the final invoice.
+                          <strong className="block font-semibold mb-0.5">{tr('Free Unused Can Return Policy:', 'बचे हुए सील जार की वापसी सुविधा:')}</strong>
+                          {tr(
+                            'Unopened sealed 20L cans exceeding actual consumption can be returned for 100% full credit on the final invoice.',
+                            'समारोह समाप्त होने पर बचे हुए सील पैक 20 लीटर जार वापस ले लिए जाएंगे और अंतिम बिल में से पूरी रकम कम कर दी जाएगी।'
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -526,14 +575,14 @@ export default function BookEventPage() {
                       onClick={handlePrev}
                       className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-[#00A99D]/30 bg-white text-[#052E2B] hover:bg-[#E8FFFA] text-xs font-semibold transition-all"
                     >
-                      <ArrowLeft className="w-4 h-4" /> Previous Step
+                      <ArrowLeft className="w-4 h-4" /> {tr('Previous Step', 'पिछला चरण')}
                     </motion.button>
                   ) : (
                     <Link
                       href="/services"
                       className="inline-flex items-center gap-1.5 text-xs text-[#4B6E6A] hover:text-[#052E2B] font-semibold transition-colors"
                     >
-                      <ArrowLeft className="w-3.5 h-3.5" /> Back to Services
+                      <ArrowLeft className="w-3.5 h-3.5" /> {tr('Back to Services', 'सेवाओं पर वापस')}
                     </Link>
                   )}
 
@@ -545,7 +594,7 @@ export default function BookEventPage() {
                       onClick={handleNext}
                       className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#00A99D] hover:bg-[#36D399] hover:text-[#052E2B] text-white text-xs font-bold transition-all shadow-md shadow-[#00A99D]/20"
                     >
-                      Continue <ArrowRight className="w-4 h-4" />
+                      {tr('Continue', 'आगे बढ़ें')} <ArrowRight className="w-4 h-4" />
                     </motion.button>
                   ) : (
                     <motion.button
@@ -555,7 +604,7 @@ export default function BookEventPage() {
                       onClick={handleSubmit}
                       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#00A99D] hover:bg-[#36D399] hover:text-[#052E2B] text-white text-sm font-bold shadow-xl shadow-[#00A99D]/30 transition-all"
                     >
-                      <PartyPopper className="w-4 h-4" /> Confirm Event Water Booking
+                      <PartyPopper className="w-4 h-4" /> {tr('Confirm Event Water Booking', 'ऑर्डर कन्फर्म करें')}
                     </motion.button>
                   )}
                 </div>
@@ -572,27 +621,30 @@ export default function BookEventPage() {
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <span className="text-xs font-bold text-[#00A99D] bg-[#E8FFFA] px-3.5 py-1 rounded-full border border-[#00A99D]/30">
-                Booking Logged
+                {tr('Booking Logged', 'बुकिंग दर्ज हो गई')}
               </span>
               <h2 className="text-2xl sm:text-4xl font-black text-[#052E2B] mt-4 mb-2 tracking-tight">
-                Event Water Order <span className="gradient-text">Confirmed!</span>
+                {tr('Event Water Order', 'समारोह का पानी ऑर्डर')} <span className="gradient-text">{tr('Confirmed!', 'पक्का हो गया!')}</span>
               </h2>
               <p className="text-sm sm:text-base text-[#4B6E6A] mb-8 max-w-md mx-auto">
-                Thank you, {formData.organizerName || 'Host'}. Your booking for the {formData.eventType} on {formData.eventDate} has been dispatched to our South Delhi fleet manager.
+                {tr(
+                  `Thank you, ${formData.organizerName || 'Host'}. Your booking for the ${formData.eventType} on ${formData.eventDate} has been dispatched to our regional event logistics fleet manager.`,
+                  `धन्यवाद, ${formData.organizerName || 'आयोजक'} जी। तारीख ${formData.eventDate} के लिए आपका ऑर्डर हमारे इवेंट डिलीवरी मैनेजर को भेज दिया गया है।`
+                )}
               </p>
 
               <div className="bg-[#F4FCFA] p-6 rounded-2xl border border-[#00A99D]/20 text-left mb-8 space-y-3 text-xs sm:text-sm">
                 <div className="flex justify-between items-center pb-2 border-b border-[#00A99D]/20">
-                  <span className="text-[#4B6E6A]">Booking Reference:</span>
+                  <span className="text-[#4B6E6A]">{tr('Booking Reference:', 'बुकिंग नंबर:')}</span>
                   <span className="font-bold text-[#00A99D] font-mono text-base">{bookingId}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#4B6E6A]">Venue Destination:</span>
+                  <span className="text-[#4B6E6A]">{tr('Venue Destination:', 'कार्यक्रम स्थल:')}</span>
                   <span className="font-semibold text-[#052E2B]">{formData.venueName}, {formData.venueArea}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#4B6E6A]">Scheduled Supply:</span>
-                  <span className="font-bold text-[#00A99D]">{formData.cansQuantity || estimatedCans} Cans (20L)</span>
+                  <span className="text-[#4B6E6A]">{tr('Scheduled Supply:', 'बुक किए गए जार:')}</span>
+                  <span className="font-bold text-[#00A99D]">{formData.cansQuantity || estimatedCans} {tr('Cans (20L)', 'जार (20 लीटर)')}</span>
                 </div>
               </div>
 
@@ -601,13 +653,13 @@ export default function BookEventPage() {
                   href="/"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#00A99D] hover:bg-[#36D399] hover:text-[#052E2B] text-white font-bold text-xs transition-all shadow-md"
                 >
-                  Return to Home
+                  {tr('Return to Home', 'होमपेज पर जाएं')}
                 </Link>
                 <Link
                   href="/contact"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-[#00A99D]/30 bg-white text-[#052E2B] hover:bg-[#E8FFFA] font-semibold text-xs transition-all"
                 >
-                  Event Support Desk
+                  {tr('Event Support Desk', 'इवेंट सपोर्ट से बात करें')}
                 </Link>
               </div>
             </motion.div>

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Search, Truck, Clock, Phone, CheckCircle2, ArrowRight,
   Waves, Check, Sun, ChevronRight, Sparkles, ShieldCheck, Calendar,
-  Filter, CalendarDays, Globe
+  Filter, CalendarDays, Globe, Factory, Lightbulb
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -545,6 +545,10 @@ export default function ServiceAreasPage() {
                   <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-bold">
                     {isHindi ? 'सभी 7 दिन' : 'All 7 Days'}
                   </span>
+                  <span className="px-2.5 py-1 rounded-full bg-[#E8FFFA] text-[#00A99D] border border-[#00A99D]/30 font-bold inline-flex items-center gap-1.5">
+                    <Factory className="w-3.5 h-3.5 text-[#00A99D]" />
+                    <span>{isHindi ? 'प्लांट से उठाव: 5:00 AM – 9:00 PM' : 'Plant Pickup: 5:00 AM – 9:00 PM'}</span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -669,7 +673,7 @@ export default function ServiceAreasPage() {
                             {/* Route schedule badge */}
                             <div className="flex flex-wrap items-center gap-1.5 text-[10px] mt-1">
                               <span
-                                className={`px-2 py-0.5 rounded-md font-bold ${
+                                className={`px-2 py-0.5 rounded-md font-bold inline-flex items-center gap-1 ${
                                   isSelected
                                     ? 'bg-white/20 text-[#36D399]'
                                     : area.scheduleType === 'mon-wed-fri'
@@ -679,7 +683,8 @@ export default function ServiceAreasPage() {
                                     : 'bg-amber-50 text-amber-800 border border-amber-200'
                                 }`}
                               >
-                                🗓️ {isHindi ? area.scheduleLabelHi : area.scheduleLabel}
+                                <CalendarDays className="w-3 h-3 shrink-0" />
+                                <span>{isHindi ? area.scheduleLabelHi : area.scheduleLabel}</span>
                               </span>
                               <span className={isSelected ? 'text-white/60' : 'text-[#4B6E6A]'}>
                                 Pin: {area.pincode}
@@ -713,7 +718,10 @@ export default function ServiceAreasPage() {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-[#E8FFFA] text-[11px] text-[#4B6E6A] flex items-center justify-between">
-                  <span>💡 {isHindi ? 'शेड्यूल रूट डिलीवरी' : 'Scheduled Day-Gap Routes'}</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>{isHindi ? 'शेड्यूल रूट डिलीवरी' : 'Scheduled Day-Gap Routes'}</span>
+                  </span>
                   <span className="font-semibold text-[#00A99D]">{t('areas_zero_fee')}</span>
                 </div>
               </div>
@@ -756,7 +764,7 @@ export default function ServiceAreasPage() {
                     </h3>
                     
                     {/* Route schedule alert banner */}
-                    <div className="mt-3 p-3 rounded-xl bg-[#F4FCFA] border border-[#00A99D]/20 text-xs text-[#052E2B] space-y-1">
+                    <div className="mt-3 p-3 rounded-xl bg-[#F4FCFA] border border-[#00A99D]/20 text-xs text-[#052E2B] space-y-1.5">
                       <div className="flex items-center gap-2 font-bold text-[#00A99D]">
                         <Calendar className="w-3.5 h-3.5" />
                         <span>
@@ -768,6 +776,14 @@ export default function ServiceAreasPage() {
                           ? (isHindi ? `${selectedArea.hubBadge} से तुरंत रोज़ाना डिलीवरी उपलब्ध है।` : `${selectedArea.hubBadge} available for immediate daily pickups.`)
                           : (isHindi ? 'हमारी डिलीवरी वैन तय शेड्यूल के अनुसार नियमित रूप से आती हैं।' : 'Our delivery vans visit on alternate scheduled days with guaranteed shifts.')}
                       </p>
+                      <div className="pt-1.5 border-t border-[#00A99D]/15 flex items-center gap-1.5 text-[11px] font-semibold text-[#00A99D]">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          {isHindi
+                            ? 'तुरंत पानी चाहिए? कोई भी व्यक्ति सुबह 5:00 AM से रात 9:00 PM तक सीधे मुख्य प्लांट (पकड़ी नदी के पास) आकर ताज़ा पानी ले सकता है।'
+                            : 'Need water right away? Anyone can get fresh water directly from our main plant (Near Pakri River) from 5:00 AM to 9:00 PM daily.'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 

@@ -4,8 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Droplets, ArrowRight, UserCheck, Truck, Shield, Lock, Eye, EyeOff, ArrowLeft, Sparkles, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function LoginPage() {
+  const { tr, isHi } = useLanguage();
   const [role, setRole] = useState<'customer' | 'supplier' | 'admin'>('customer');
   const [phoneOrEmail, setPhoneOrEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,24 +16,36 @@ export default function LoginPage() {
 
   const portals = {
     customer: {
-      title: 'Customer Portal',
-      desc: 'Track daily deliveries, pay bills & manage subscription',
+      title: tr('Customer Portal', 'ग्राहक पोर्टल'),
+      tabLabel: tr('Customer', 'ग्राहक'),
+      desc: tr(
+        'Track daily deliveries, pay bills & manage subscription',
+        'रोज़ाना पानी की डिलीवरी ट्रैक करें, बिल भरें और प्लान बदलें'
+      ),
       demoCreds: { id: '9811122334', pass: 'customer123', redirect: 'http://localhost:3001/dashboard' },
       icon: UserCheck,
       color: 'text-[#00A99D]',
       badgeBg: 'bg-[#E8FFFA] text-[#00A99D] border-[#00A99D]/20'
     },
     supplier: {
-      title: 'Supplier & Driver Portal',
-      desc: 'Active delivery routes, OTP confirmation & cash collections',
+      title: tr('Supplier & Driver Portal', 'डिलीवरी बॉय व सप्लायर पोर्टल'),
+      tabLabel: tr('Supplier', 'सप्लायर'),
+      desc: tr(
+        'Active delivery routes, OTP confirmation & cash collections',
+        'चालू डिलीवरी रूट, ओटीपी डिलीवरी पुष्टि व कैश कलेक्शन'
+      ),
       demoCreds: { id: '9876500001', pass: 'supplier123', redirect: 'http://localhost:3002/dashboard' },
       icon: Truck,
       color: 'text-[#36D399]',
       badgeBg: 'bg-[#E8FFFA] text-[#052E2B] border-[#36D399]/30'
     },
     admin: {
-      title: 'Admin CRM & Dispatch',
-      desc: 'Fleet overview, customer ledger, inventory & business analytics',
+      title: tr('Admin CRM & Dispatch', 'एडमिन सीआरएम व डिस्पैच'),
+      tabLabel: tr('Admin', 'एडमिन'),
+      desc: tr(
+        'Fleet overview, customer ledger, inventory & business analytics',
+        'डिलीवरी गाड़ियां, ग्राहक लेजर, प्लांट स्टॉक व बिज़नेस रिपोर्ट'
+      ),
       demoCreds: { id: 'admin@kentplus.com', pass: 'admin123', redirect: 'http://localhost:3003/dashboard' },
       icon: Shield,
       color: 'text-[#052E2B]',
@@ -76,10 +90,10 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-2xl sm:text-3xl font-black text-[#052E2B] tracking-tight"
         >
-          Sign in to Kent Plus
+          {tr('Sign in to Kent Plus', 'केंट प्लस पोर्टल में लॉगिन करें')}
         </motion.h1>
         <p className="mt-1 text-xs sm:text-sm text-[#4B6E6A]">
-          Select your portal to continue to your verified dashboard
+          {tr('Select your portal to continue to your verified dashboard', 'अपने डैशबोर्ड पर जाने के लिए नीचे से अपना पोर्टल चुनें')}
         </p>
       </div>
 
@@ -107,7 +121,7 @@ export default function LoginPage() {
                   }`}
                 >
                   <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#00A99D]' : 'text-[#4B6E6A]'}`} />
-                  <span>{r}</span>
+                  <span>{portals[r].tabLabel}</span>
                 </button>
               );
             })}
@@ -138,7 +152,9 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-[#052E2B] mb-1.5">
-                {role === 'admin' ? 'Work Email' : 'Mobile Number / User ID'}
+                {role === 'admin'
+                  ? tr('Work Email', 'ऑफिशियल ईमेल')
+                  : tr('Mobile Number / User ID', 'मोबाइल नंबर या यूज़र आईडी')}
               </label>
               <input
                 type="text"
@@ -152,9 +168,9 @@ export default function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-[#052E2B]">Password</label>
+                <label className="block text-xs font-semibold text-[#052E2B]">{tr('Password', 'पासवर्ड')}</label>
                 <Link href="/forgot-password" className="text-xs font-medium text-[#00A99D] hover:underline">
-                  Forgot password?
+                  {tr('Forgot password?', 'पासवर्ड भूल गए?')}
                 </Link>
               </div>
               <div className="relative">
@@ -184,11 +200,11 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Signing In...</span>
+                  <span>{tr('Signing In...', 'लॉगिन हो रहा है...')}</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In to {portals[role].title.split(' ')[0]} Portal</span>
+                  <span>{tr(`Sign In to ${portals[role].title}`, `${portals[role].title} में प्रवेश करें`)}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -199,7 +215,7 @@ export default function LoginPage() {
           <div className="mt-8 pt-6 border-t border-[#E8FFFA]">
             <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#4B6E6A] uppercase tracking-wider mb-3">
               <Sparkles className="w-3.5 h-3.5 text-[#00A99D]" />
-              <span>Instant 1-Click Demo Login</span>
+              <span>{tr('Instant 1-Click Demo Login', '1-क्लिक से डेमो लॉगिन')}</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -208,7 +224,7 @@ export default function LoginPage() {
                 className="p-2.5 rounded-xl border border-[#00A99D]/20 bg-[#F4FCFA] hover:bg-[#E8FFFA] text-center text-xs font-semibold text-[#052E2B] transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5"
               >
                 <UserCheck className="w-3.5 h-3.5 text-[#00A99D]" />
-                <span>Customer</span>
+                <span>{tr('Customer', 'ग्राहक')}</span>
               </button>
               <button
                 type="button"
@@ -216,7 +232,7 @@ export default function LoginPage() {
                 className="p-2.5 rounded-xl border border-[#00A99D]/20 bg-[#F4FCFA] hover:bg-[#E8FFFA] text-center text-xs font-semibold text-[#052E2B] transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5"
               >
                 <Truck className="w-3.5 h-3.5 text-[#00A99D]" />
-                <span>Supplier</span>
+                <span>{tr('Supplier', 'सप्लायर')}</span>
               </button>
               <button
                 type="button"
@@ -224,22 +240,22 @@ export default function LoginPage() {
                 className="p-2.5 rounded-xl border border-[#00A99D]/20 bg-[#F4FCFA] hover:bg-[#E8FFFA] text-center text-xs font-semibold text-[#052E2B] transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5"
               >
                 <Shield className="w-3.5 h-3.5 text-[#00A99D]" />
-                <span>Admin</span>
+                <span>{tr('Admin', 'एडमिन')}</span>
               </button>
             </div>
           </div>
 
           <div className="mt-6 text-center text-xs text-[#4B6E6A]">
-            New customer?{' '}
+            {tr('New customer?', 'नए ग्राहक हैं?')}{' '}
             <Link href="/book-water" className="font-bold text-[#00A99D] hover:underline inline-flex items-center gap-1">
-              Create account &amp; start delivery <ArrowRight className="w-3.5 h-3.5" />
+              {tr('Create account & start delivery', 'नया खाता बनाएं और पानी शुरू करें')} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
 
         <div className="mt-6 text-center">
           <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-[#4B6E6A] hover:text-[#052E2B] font-semibold transition-colors">
-            <ArrowLeft className="w-3.5 h-3.5" /> Return to Website Home
+            <ArrowLeft className="w-3.5 h-3.5" /> {tr('Return to Website Home', 'मुख्य होमपेज पर वापस जाएं')}
           </Link>
         </div>
       </motion.div>

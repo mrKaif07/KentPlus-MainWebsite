@@ -7,13 +7,33 @@ import {
   Droplets, Phone, Mail, MapPin, MessageCircle, Send,
   Globe, Share2, ArrowUp, ArrowRight, ShieldCheck, Sparkles
 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { BRAND } from '@/lib/constants';
 
 export default function Footer() {
   const [year, setYear] = useState<number | null>(null);
+  const { lang, tr, t } = useLanguage();
 
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
+
+  const quickLinks = [
+    { href: '/', label: tr('Home', 'होम') },
+    { href: '/about', label: tr('About Our Plant', 'हमारा प्लांट व कहानी') },
+    { href: '/services', label: tr('Our Services', 'हमारी सेवाएं') },
+    { href: '/service-areas', label: tr('Service Areas', 'डिलीवरी क्षेत्र') },
+    { href: '/faq', label: tr('FAQ', 'सामान्य प्रश्न') },
+    { href: '/contact', label: tr('Contact Us', 'संपर्क करें') },
+  ];
+
+  const waterServices = [
+    { href: '/services/daily-water', label: tr('Daily Home Delivery', 'रोज़ाना घर पर डिलीवरी') },
+    { href: '/services/office-water', label: tr('Corporate & Offices', 'ऑफिस व कॉर्पोरेट सप्लाई') },
+    { href: '/services/event-water', label: tr('Wedding & Receptions', 'शादी व रिसेप्शन') },
+    { href: '/book-event', label: tr('Bulk Function Booking', 'समारोह के लिए थोक बुकिंग') },
+    { href: '/book-water', label: tr('Subscribe 20L Jars', '20 लीटर जार सब्सक्राइब करें') },
+  ];
 
   return (
     <footer className="relative bg-[#052E2B] text-white overflow-hidden pt-20 border-t border-[#00A99D]/20">
@@ -21,35 +41,35 @@ export default function Footer() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[#00A99D]/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[#36D399]/5 blur-[100px] pointer-events-none" />
 
-      {/* Top Banner / "Have question? No worries!" Card from reference mockup */}
+      {/* Top Banner / "Have question? No worries!" Card */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-16 relative z-10">
         <div className="rounded-3xl bg-gradient-to-r from-[#03211F] via-[#052E2B] to-[#00A99D]/25 border border-[#00A99D]/30 p-8 sm:p-10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8 backdrop-blur-xl">
           <div className="space-y-2 text-center lg:text-left">
             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#36D399]">
-              <Sparkles className="w-3.5 h-3.5 text-[#36D399]" /> 24/7 South Delhi Support
+              <Sparkles className="w-3.5 h-3.5 text-[#36D399]" /> {t('footer_support_badge')}
             </span>
             <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Have questions? <span className="text-[#36D399]">No worries!</span>
+              {t('footer_support_title')} <span className="text-[#36D399]">{t('footer_support_highlight')}</span>
             </h3>
             <p className="text-sm text-[#E8FFFA]/70 max-w-xl">
-              Our South Delhi operations desk is ready to help with deliveries, weddings, or custom subscriptions.
+              {t('footer_support_desc')}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 w-full lg:w-auto">
             <a
-              href="https://wa.me/919876543210"
+              href={`https://wa.me/91${BRAND.rawPhone || '9934005300'}`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-xs sm:text-sm font-bold bg-[#36D399] text-[#052E2B] hover:bg-white transition-all shadow-lg shadow-[#36D399]/20 hover:-translate-y-0.5"
             >
               <MessageCircle className="w-4 h-4 fill-[#052E2B]" />
-              <span>WhatsApp Us</span>
+              <span>{t('footer_whatsapp')}</span>
             </a>
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-xs sm:text-sm font-bold bg-white/10 hover:bg-white/20 text-[#E8FFFA] border border-[#E8FFFA]/20 transition-all hover:-translate-y-0.5"
             >
-              <span>Contact Desk</span>
+              <span>{t('footer_contact_desk')}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -72,20 +92,20 @@ export default function Footer() {
                   KENT <span className="text-[#36D399]">PLUS</span>
                 </span>
                 <span className="text-[10px] tracking-widest uppercase font-bold text-[#00A99D]">
-                  Pure Water. Delivered With Trust.
+                  {t('footer_tagline')}
                 </span>
               </div>
             </Link>
 
             <p className="text-[#E8FFFA]/65 text-sm leading-relaxed max-w-sm">
-              South Delhi&apos;s reliable drinking water partner. 7-stage purified 20-Litre jars delivered daily to homes, offices, and special wedding functions with live tracking.
+              {t('footer_desc')}
             </p>
 
             <div className="flex items-center gap-3 pt-2">
               {[
-                { icon: MessageCircle, label: 'WhatsApp', href: 'https://wa.me/919876543210' },
-                { icon: Phone, label: 'Helpline', href: 'tel:+919876543210' },
-                { icon: Mail, label: 'Email', href: 'mailto:info@kentplus.in' },
+                { icon: MessageCircle, label: 'WhatsApp', href: `https://wa.me/91${BRAND.rawPhone || '9934005300'}` },
+                { icon: Phone, label: 'Helpline', href: `tel:${BRAND.phone.replace(/\s+/g, '')}` },
+                ...(BRAND.email ? [{ icon: Mail, label: 'Email', href: `mailto:${BRAND.email}` }] : []),
                 { icon: Globe, label: 'Web', href: '/' },
               ].map(({ icon: Icon, label, href }) => (
                 <a
@@ -103,17 +123,10 @@ export default function Footer() {
           {/* Quick Links */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#36D399] mb-5">
-              Quick Links
+              {t('footer_quick_links')}
             </h4>
             <ul className="space-y-3">
-              {[
-                { href: '/', label: 'Home' },
-                { href: '/about', label: 'About Our Plant' },
-                { href: '/services', label: 'Our Services' },
-                { href: '/service-areas', label: 'Service Areas' },
-                { href: '/faq', label: 'FAQ' },
-                { href: '/contact', label: 'Contact Us' },
-              ].map((link) => (
+              {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -130,16 +143,10 @@ export default function Footer() {
           {/* Water Services */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#36D399] mb-5">
-              Water Supply
+              {t('footer_water_supply')}
             </h4>
             <ul className="space-y-3">
-              {[
-                { href: '/services/daily-water', label: 'Daily Home Delivery' },
-                { href: '/services/office-water', label: 'Corporate & Offices' },
-                { href: '/services/event-water', label: 'Wedding & Receptions' },
-                { href: '/book-event', label: 'Bulk Function Booking' },
-                { href: '/book-water', label: 'Subscribe 20L Jars' },
-              ].map((link) => (
+              {waterServices.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -156,7 +163,7 @@ export default function Footer() {
           {/* Contact Details */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#36D399] mb-5">
-              Direct Contact
+              {t('footer_direct_contact')}
             </h4>
             <ul className="space-y-4 text-sm text-[#E8FFFA]/70">
               <li className="flex items-start gap-3">
@@ -164,26 +171,51 @@ export default function Footer() {
                   <Phone className="w-3.5 h-3.5 text-[#36D399]" />
                 </div>
                 <div>
-                  <span className="block text-white font-bold">+91 98765 43210</span>
-                  <span className="text-[11px] text-[#E8FFFA]/50">6:00 AM - 9:00 PM Daily</span>
+                  <a
+                    href={`tel:${BRAND.phone.replace(/\s+/g, '')}`}
+                    className="block text-white font-bold hover:text-[#36D399] transition-colors"
+                  >
+                    {BRAND.phone}
+                  </a>
+                  <span className="text-[11px] text-[#E8FFFA]/50">{t('footer_timings')}</span>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#00A99D]/20 border border-[#00A99D]/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <Mail className="w-3.5 h-3.5 text-[#36D399]" />
+                  <MessageCircle className="w-3.5 h-3.5 text-[#36D399]" />
                 </div>
                 <div>
-                  <span className="block text-white font-bold">info@kentplus.in</span>
-                  <span className="text-[11px] text-[#E8FFFA]/50">Orders & Inquiries</span>
+                  <a
+                    href={`https://wa.me/91${BRAND.rawPhone || '9934005300'}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block text-white font-bold hover:text-[#36D399] transition-colors"
+                  >
+                    {tr('WhatsApp Orders', 'व्हाट्सएप ऑर्डर')}
+                  </a>
+                  <span className="text-[11px] text-[#E8FFFA]/50">{BRAND.phone}</span>
                 </div>
               </li>
+              {BRAND.email ? (
+                <li className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#00A99D]/20 border border-[#00A99D]/30 flex items-center justify-center shrink-0 mt-0.5">
+                    <Mail className="w-3.5 h-3.5 text-[#36D399]" />
+                  </div>
+                  <div>
+                    <a href={`mailto:${BRAND.email}`} className="block text-white font-bold hover:text-[#36D399] transition-colors">
+                      {BRAND.email}
+                    </a>
+                    <span className="text-[11px] text-[#E8FFFA]/50">{tr('Orders & Inquiries', 'ऑर्डर एवं पूछताछ')}</span>
+                  </div>
+                </li>
+              ) : null}
               <li className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#00A99D]/20 border border-[#00A99D]/30 flex items-center justify-center shrink-0 mt-0.5">
                   <MapPin className="w-3.5 h-3.5 text-[#36D399]" />
                 </div>
                 <div>
-                  <span className="block text-white font-semibold">South Delhi Central Hub</span>
-                  <span className="text-[11px] text-[#E8FFFA]/50">Serving Saket, GK, Hauz Khas & South Ext</span>
+                  <span className="block text-white font-semibold">{t('footer_hub_title')}</span>
+                  <span className="text-[11px] text-[#E8FFFA]/50">{t('footer_hub_desc')}</span>
                 </div>
               </li>
             </ul>
@@ -196,14 +228,14 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#E8FFFA]/50">
             <p>
-              © {year ?? 2026} Kent Plus Water Supply Services. All rights reserved.
+              © {year ?? 2026} {t('footer_rights')}
             </p>
             <div className="flex items-center gap-6">
               <Link href="/terms" className="hover:text-[#36D399] transition-colors">
-                Terms of Service
+                {t('footer_terms')}
               </Link>
               <Link href="/privacy" className="hover:text-[#36D399] transition-colors">
-                Privacy Policy
+                {t('footer_privacy')}
               </Link>
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
